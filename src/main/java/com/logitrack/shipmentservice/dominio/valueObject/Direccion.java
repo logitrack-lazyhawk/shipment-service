@@ -7,7 +7,7 @@ import lombok.*;
  * Value Object que representa la dirección de origen o destino de un envío.
  * Se utiliza como un objeto embebido dentro de la entidad Envio.
  *
- * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo LogiTrack
+ * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
  */
 @Getter

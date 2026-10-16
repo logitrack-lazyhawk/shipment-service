@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * para registrar de forma automatica la creacion y actualizacion de los registros.
  * Aplicamos el patron MappedSuperclass para delegar sus columnas a las tablas hijas.
  *
- * @author LuisMPlus, 95670446-maker y leoM2022
+ * @author LuisMPlus, 95670446-maker y leoM2022 - Equipo lazyHawk
  * @version 1.0.0
  */
 @Getter
