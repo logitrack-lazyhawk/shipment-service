@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -41,6 +42,37 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return mapearHaciaResponse(envioGuardado);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public EnvioResponseDto obtenerPorId(String id) {
+        Envio envio = envioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
+        return mapearHaciaResponse(envio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EnvioResponseDto obtenerPorTracking(String codigo) {
+        Envio envio = envioRepository.findByCodigoSeguimiento(codigo)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el código de seguimiento especificado."));
+        return mapearHaciaResponse(envio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EnvioResponseDto> listarEnvios(EstadoEnvio estado) {
+        List<Envio> listaEnvios;
+        if (estado != null) {
+            listaEnvios = envioRepository.findEstado(estado);
+        } else {
+            listaEnvios = envioRepository.findAll();
+        }
+
+        return listaEnvios.stream()
+                .map(this::mapearHaciaResponse)
+                .toList();
+    }
+    
 
     private String generarHashUnico() {
         String hashGenerado;
