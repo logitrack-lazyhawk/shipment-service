@@ -16,5 +16,6 @@ public interface EnvioServicio {
     EnvioResponseDto obtenerPorId(String id);
     EnvioResponseDto obtenerPorTracking(String codigo);
     List<EnvioResponseDto> listarEnvios(EstadoEnvio estado);
+    EnvioResponseDto cancelarEnvio(String id);
 
 }

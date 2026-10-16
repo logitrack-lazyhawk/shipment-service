@@ -86,4 +86,22 @@ public class EnvioController {
         return ResponseEntity.ok(envioServicio.listarEnvios(estado));
     }
 
+    /**
+     * Anula un envío registrado en el sistema.
+     * Solo procede si el paquete se encuentra estrictamente en estado PENDIENTE.
+     *
+     * @param id Identificador UUID del envío a cancelar.
+     * @return El detalle del envío con su estado actualizado a CANCELADO.
+     */
+    @Operation(summary = "Cancelar un envío (Solo aplicable en estado PENDIENTE)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Envío cancelado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "El envío ya no puede ser cancelado por su estado actual"),
+            @ApiResponse(responseCode = "404", description = "Envío no encontrado")
+    })
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<EnvioResponseDto> cancelarEnvio(@PathVariable String id) {
+        return ResponseEntity.ok(envioService.cancelarEnvio(id));
+    }
+
 }
