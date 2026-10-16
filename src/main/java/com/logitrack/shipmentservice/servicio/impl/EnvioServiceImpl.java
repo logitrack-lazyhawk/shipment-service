@@ -72,7 +72,17 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .map(this::mapearHaciaResponse)
                 .toList();
     }
-    
+    @Override
+    @Transactional
+    public EnvioResponseDto cancelarEnvio(String id) {
+        Envio envio = envioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
+
+        envio.cancelar();
+        Envio envioGuardado = envioRepository.save(envio);
+
+        return mapearHaciaResponse(envioGuardado);
+    }
 
     private String generarHashUnico() {
         String hashGenerado;
