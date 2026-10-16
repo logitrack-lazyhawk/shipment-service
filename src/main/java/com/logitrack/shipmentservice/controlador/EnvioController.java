@@ -2,6 +2,7 @@ package com.logitrack.shipmentservice.controlador;
 
 import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
+import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -11,9 +12,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Controlador REST para la gestion principal de envios.
@@ -29,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Gestion de envios", description = "Endpoints transaccionales para el ciclo de vida de los paquetes")
 public class EnvioController {
     private final EnvioServicio envioService;
+    private final EnvioServicio envioServicio;
+
     /**
      * Registra un nuevo envío en la plataforma LogiTrack.
      * Genera automáticamente el Hash único de seguimiento y establece el estado en PENDIENTE.
@@ -45,6 +48,42 @@ public class EnvioController {
     public ResponseEntity<EnvioResponseDto> registrarEnvio(@RequestBody EnvioRequestDto peticion) {
         EnvioResponseDto respuesta = envioService.registrarEnvio(peticion);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+    }
+
+    /**
+     * Consulta el detalle de un envío específico utilizando su identificador único.
+     *
+     * @param id Identificador UUID del envío.
+     * @return El detalle completo del paquete.
+     */
+    @Operation(summary = "Obtener un envío por su UUID")
+    @GetMapping("/{id}")
+    public ResponseEntity<EnvioResponseDto> obtenerPorId(@PathVariable String id) {
+        return ResponseEntity.ok(envioServicio.obtenerPorId(id));
+    }
+
+    /**
+     * Consulta el detalle de un envío utilizando su código de seguimiento (Tracking Code).
+     *
+     * @param codigo Código de seguimiento público (Ej. LT-XXXXXX-XXXXX).
+     * @return El detalle completo del paquete.
+     */
+    @Operation(summary = "Rastrear un envío por su código de seguimiento")
+    @GetMapping("/tracking/{codigo}")
+    public ResponseEntity<EnvioResponseDto> obtenerPorTracking(@PathVariable String codigo) {
+        return ResponseEntity.ok(envioServicio.obtenerPorTracking(codigo));
+    }
+
+    /**
+     * Obtiene la lista de envíos registrados en el sistema, permitiendo un filtrado opcional por estado.
+     *
+     * @param estado Estado operativo del envío a filtrar (opcional).
+     * @return Lista de envíos que coinciden con el criterio.
+     */
+    @Operation(summary = "Listar envíos registrados (con filtrado opcional por estado)")
+    @GetMapping
+    public ResponseEntity<List<EnvioResponseDto>> listarEnvios(@RequestParam(required = false) EstadoEnvio estado) {
+        return ResponseEntity.ok(envioServicio.listarEnvios(estado));
     }
 
 }
