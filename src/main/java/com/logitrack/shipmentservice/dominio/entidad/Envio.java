@@ -20,7 +20,7 @@ import lombok.Setter;
  * Entidad principal que representa un paquete o envío dentro del sistema LogiTrack.
  * Gestiona la información física, las direcciones y su ciclo de vida operativo.
  *
- * @author TuNombre / Equipo LogiTrack
+ * @author luisMPlus, 95670446-maker y leoM2022 - Equipo lazyHawk
  * @version 1.0.0
  */
 @Entity
