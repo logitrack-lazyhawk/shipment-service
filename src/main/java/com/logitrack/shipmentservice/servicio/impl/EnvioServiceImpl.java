@@ -5,14 +5,18 @@ import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
+import com.logitrack.shipmentservice.dominio.evento.EnvioEstadoCambiadoEvent;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
+import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +32,8 @@ import java.util.UUID;
 public class EnvioServiceImpl implements EnvioServicio {
 
     private final EnvioRepository envioRepository;
+    private final HistorialEnvioRepository historialRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -100,11 +106,19 @@ public class EnvioServiceImpl implements EnvioServicio {
         Envio envio = envioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
 
-        // Aquí ocurre la magia de la máquina de estados que programaste en la entidad
-        envio.cambiarEstado(nuevoEstado);
+        EstadoEnvio estadoAnterior = envio.getEstado();
 
-        // Guardamos los cambios en la base de datos
+        // 1. La entidad valida y cambia el estado
+        envio.cambiarEstado(nuevoEstado);
         Envio envioActualizado = envioRepository.save(envio);
+
+        // 2. Publicamos el evento
+        eventPublisher.publishEvent(new EnvioEstadoCambiadoEvent(
+                envioActualizado.getId(), // Ahora sí coinciden los tipos (String)
+                estadoAnterior,
+                envioActualizado.getEstado(),
+                LocalDateTime.now()
+        ));
 
         return mapearHaciaResponse(envioActualizado);
     }
