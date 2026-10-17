@@ -5,14 +5,18 @@ import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
+import com.logitrack.shipmentservice.dominio.evento.EnvioEstadoCambiadoEvent;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
+import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +32,8 @@ import java.util.UUID;
 public class EnvioServiceImpl implements EnvioServicio {
 
     private final EnvioRepository envioRepository;
+    private final HistorialEnvioRepository historialRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -63,7 +69,7 @@ public class EnvioServiceImpl implements EnvioServicio {
     public List<EnvioResponseDto> listarEnvios(EstadoEnvio estado) {
         List<Envio> listaEnvios;
         if (estado != null) {
-            listaEnvios = envioRepository.findEstado(estado);
+            listaEnvios = envioRepository.findByEstado(estado);
         } else {
             listaEnvios = envioRepository.findAll();
         }
@@ -94,6 +100,28 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return hashGenerado;
     }
+    @Override
+    @Transactional
+    public EnvioResponseDto cambiarEstado(String id, EstadoEnvio nuevoEstado) {
+        Envio envio = envioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
+
+        EstadoEnvio estadoAnterior = envio.getEstado();
+
+        // 1. La entidad valida y cambia el estado
+        envio.cambiarEstado(nuevoEstado);
+        Envio envioActualizado = envioRepository.save(envio);
+
+        // 2. Publicamos el evento
+        eventPublisher.publishEvent(new EnvioEstadoCambiadoEvent(
+                envioActualizado.getId(), // Ahora sí coinciden los tipos (String)
+                estadoAnterior,
+                envioActualizado.getEstado(),
+                LocalDateTime.now()
+        ));
+
+        return mapearHaciaResponse(envioActualizado);
+    }
 
     private Envio mapearDesdeRequest(EnvioRequestDto dto) {
         return Envio.builder()
@@ -106,7 +134,11 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .build();
     }
 
+    //Modifique esta funcion
     private Direccion mapearDireccionVO(DireccionDto dto) {
+        if (dto == null) {
+            return null; // O podríamos lanzar una excepción si las direcciones son obligatorias
+        }
         return Direccion.builder()
                 .calle(dto.calle())
                 .numero(dto.numero())
@@ -117,6 +149,7 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .descripcion(dto.descripcion())
                 .build();
     }
+
 
     private EnvioResponseDto mapearHaciaResponse(Envio envio) {
         return new EnvioResponseDto(
