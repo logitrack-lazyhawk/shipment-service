@@ -1,5 +1,6 @@
 package com.logitrack.shipmentservice.controlador;
 
+import com.logitrack.shipmentservice.dominio.dto.CambiarEstadoRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +47,7 @@ public class EnvioController {
             @ApiResponse(responseCode = "400", description = "Los datos enviados en la petición no son válidos")
     })
     @PostMapping
-    public ResponseEntity<EnvioResponseDto> registrarEnvio(@RequestBody EnvioRequestDto peticion) {
+    public ResponseEntity<EnvioResponseDto> registrarEnvio(@Valid @RequestBody EnvioRequestDto peticion) {
         EnvioResponseDto respuesta = envioService.registrarEnvio(peticion);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
@@ -102,6 +104,19 @@ public class EnvioController {
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<EnvioResponseDto> cancelarEnvio(@PathVariable String id) {
         return ResponseEntity.ok(envioService.cancelarEnvio(id));
+    }
+    // Agregamos el endpoint
+    @Operation(summary = "Cambiar el estado de un envío")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado cambiado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Transición de estado inválida"),
+            @ApiResponse(responseCode = "404", description = "Envío no encontrado")
+    })
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<EnvioResponseDto> cambiarEstado(
+            @PathVariable String id,
+            @RequestBody @Valid CambiarEstadoRequestDto request) {
+        return ResponseEntity.ok(envioServicio.cambiarEstado(id, request.nuevoEstado()));
     }
 
 }

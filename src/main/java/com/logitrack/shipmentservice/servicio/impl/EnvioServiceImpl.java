@@ -63,7 +63,7 @@ public class EnvioServiceImpl implements EnvioServicio {
     public List<EnvioResponseDto> listarEnvios(EstadoEnvio estado) {
         List<Envio> listaEnvios;
         if (estado != null) {
-            listaEnvios = envioRepository.findEstado(estado);
+            listaEnvios = envioRepository.findByEstado(estado);
         } else {
             listaEnvios = envioRepository.findAll();
         }
@@ -94,6 +94,20 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return hashGenerado;
     }
+    @Override
+    @Transactional
+    public EnvioResponseDto cambiarEstado(String id, EstadoEnvio nuevoEstado) {
+        Envio envio = envioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
+
+        // Aquí ocurre la magia de la máquina de estados que programaste en la entidad
+        envio.cambiarEstado(nuevoEstado);
+
+        // Guardamos los cambios en la base de datos
+        Envio envioActualizado = envioRepository.save(envio);
+
+        return mapearHaciaResponse(envioActualizado);
+    }
 
     private Envio mapearDesdeRequest(EnvioRequestDto dto) {
         return Envio.builder()
@@ -106,7 +120,11 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .build();
     }
 
+    //Modifique esta funcion
     private Direccion mapearDireccionVO(DireccionDto dto) {
+        if (dto == null) {
+            return null; // O podríamos lanzar una excepción si las direcciones son obligatorias
+        }
         return Direccion.builder()
                 .calle(dto.calle())
                 .numero(dto.numero())
@@ -117,6 +135,7 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .descripcion(dto.descripcion())
                 .build();
     }
+
 
     private EnvioResponseDto mapearHaciaResponse(Envio envio) {
         return new EnvioResponseDto(

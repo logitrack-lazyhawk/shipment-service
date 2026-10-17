@@ -1,6 +1,7 @@
 package com.logitrack.shipmentservice.dominio.entidad;
 
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
+import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -105,13 +106,15 @@ public class Envio extends EntidadAuditable {
     /**
      * Ejecuta la transición de estado hacia CANCELADO si las reglas de negocio lo permiten.
      *
-     * @throws IllegalStateException si el paquete ya ha avanzado en su ciclo de vida.
+     * @throws TransicionEstadoInvalidaException si el paquete ya ha avanzado en su ciclo de vida.
      */
     public void cancelar() {
         if (Boolean.TRUE.equals(puedeCancelarse())) {
             this.estado = EstadoEnvio.CANCELADO;
         } else {
-            throw new IllegalStateException("Error de dominio: El envío no se encuentra en estado PENDIENTE.");
+            throw new TransicionEstadoInvalidaException(
+                    "Error de dominio: El envío no se encuentra en estado PENDIENTE para ser cancelado. Estado actual: " + this.estado
+            );
         }
     }
 
@@ -120,8 +123,47 @@ public class Envio extends EntidadAuditable {
      *
      * @param nuevoEstado El estado de destino.
      */
+    /**
+     * Coordina la transición operativa de los estados del paquete.
+     * Aplica la máquina de estados estricta: PENDIENTE -> EN_RUTA -> ENTREGADO (o CANCELADO).
+     *
+     * @param nuevoEstado El estado de destino.
+     * @throws TransicionEstadoInvalidaException si el salto de estado no está permitido.
+     */
     public void cambiarEstado(EstadoEnvio nuevoEstado) {
-        // TODO: Desarrollar la validación estricta de la máquina de estados.
+        if (nuevoEstado == null) {
+            throw new TransicionEstadoInvalidaException("El nuevo estado no puede ser nulo.");
+        }
+
+        // Validamos según el estado actual
+        switch (this.estado) {
+            case PENDIENTE:
+                if (nuevoEstado != EstadoEnvio.EN_RUTA && nuevoEstado != EstadoEnvio.CANCELADO) {
+                    throw new TransicionEstadoInvalidaException(
+                            "Transición inválida: De PENDIENTE solo se puede pasar a EN_RUTA o CANCELADO. Se intentó: " + nuevoEstado
+                    );
+                }
+                break;
+
+            case EN_RUTA:
+                if (nuevoEstado != EstadoEnvio.ENTREGADO) {
+                    throw new TransicionEstadoInvalidaException(
+                            "Transición inválida: De EN_RUTA solo se puede pasar a ENTREGADO. Se intentó: " + nuevoEstado
+                    );
+                }
+                break;
+
+            case ENTREGADO:
+            case CANCELADO:
+                throw new TransicionEstadoInvalidaException(
+                        "Transición inválida: El envío ya está en un estado final (" + this.estado + ") y no puede modificarse."
+                );
+
+            default:
+                throw new TransicionEstadoInvalidaException("Estado actual no reconocido.");
+        }
+
+        // Si pasó todas las validaciones, actualizamos el estado
         this.estado = nuevoEstado;
     }
 }

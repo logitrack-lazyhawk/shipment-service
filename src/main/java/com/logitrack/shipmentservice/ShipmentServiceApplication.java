@@ -11,7 +11,6 @@ public class ShipmentServiceApplication {
     public static void main(String[] args) {
 
         SpringApplication.run(ShipmentServiceApplication.class, args);
-        //Inicio #9
     }
 
 }
