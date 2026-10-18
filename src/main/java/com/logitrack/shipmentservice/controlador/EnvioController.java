@@ -1,5 +1,6 @@
 package com.logitrack.shipmentservice.controlador;
 
+import com.logitrack.shipmentservice.dominio.dto.AsignarRepartidorRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.CambiarEstadoRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
@@ -19,18 +20,18 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Controlador REST para la gestion principal de envios.
- * Expone la interfaz web para el registro, calculo de tarifas y seguimiento de paquetes
+ * Controlador REST para la gestión principal de envíos.
+ * Expone la interfaz web para el registro, cálculo de tarifas, seguimiento y asignación de repartidores.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
  */
-
 @RestController
 @RequestMapping("/api/v1/envios")
 @RequiredArgsConstructor
 @Tag(name = "Gestion de envios", description = "Endpoints transaccionales para el ciclo de vida de los paquetes")
 public class EnvioController {
+
     private final EnvioServicio envioServicio;
 
     /**
@@ -118,4 +119,25 @@ public class EnvioController {
         return ResponseEntity.ok(envioServicio.cambiarEstado(id, request.nuevoEstado()));
     }
 
+    /**
+     * Vincula un repartidor al envío antes de iniciar el viaje.
+     * Valida que el envío se encuentre en un estado previo a EN_RUTA (estrictamente PENDIENTE)
+     * y que el repartidor exista y esté en estado ACTIVO.
+     *
+     * @param id Identificador UUID del envío.
+     * @param request Objeto que contiene el UUID del repartidor a asignar.
+     * @return El detalle del paquete actualizado con el repartidor asignado.
+     */
+    @Operation(summary = "Asignar un repartidor a un paquete antes de iniciar el viaje")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Repartidor asignado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Reglas de negocio no cumplidas o repartidor inactivo"),
+            @ApiResponse(responseCode = "404", description = "Envío o repartidor no encontrado")
+    })
+    @PostMapping("/{id}/asignar-repartidor")
+    public ResponseEntity<EnvioResponseDto> asignarRepartidor(
+            @PathVariable UUID id,
+            @RequestBody @Valid AsignarRepartidorRequestDto request) {
+        return ResponseEntity.ok(envioServicio.asignarRepartidor(id, request.repartidorId()));
+    }
 }

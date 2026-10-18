@@ -1,6 +1,8 @@
 package com.logitrack.shipmentservice.dominio.entidad;
 
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
+import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
+import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
 import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import jakarta.persistence.AttributeOverride;
@@ -10,6 +12,9 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +24,7 @@ import lombok.Setter;
 
 /**
  * Entidad principal que representa un paquete o envío dentro del sistema LogiTrack.
- * Gestiona la información física, las direcciones y su ciclo de vida operativo.
+ * Gestiona la información física, las direcciones, su ciclo de vida operativo y el repartidor asignado.
  *
  * @author luisMPlus, 95670446-maker y leoM2022 - Equipo lazyHawk
  * @version 1.0.0
@@ -79,9 +84,12 @@ public class Envio extends EntidadAuditable {
     })
     private Direccion destino;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "repartidor_id", columnDefinition = "binary(16)")
+    private Repartidor repartidor;
+
     /**
      * TODO: Implementar relación ManyToOne con Cliente cuando se modele dicha entidad (FetchType.LAZY).
-     * TODO: Implementar relación ManyToOne con Repartidor para la asignación (FetchType.LAZY).
      * TODO: Integrar lógica de validación de pago antes de despachar el envío.
      */
 
@@ -118,11 +126,6 @@ public class Envio extends EntidadAuditable {
         }
     }
 
-    /**
-     * Coordina la transición operativa de los estados del paquete.
-     *
-     * @param nuevoEstado El estado de destino.
-     */
     /**
      * Coordina la transición operativa de los estados del paquete.
      * Aplica la máquina de estados estricta: PENDIENTE -> EN_RUTA -> ENTREGADO (o CANCELADO).
@@ -165,5 +168,30 @@ public class Envio extends EntidadAuditable {
 
         // Si pasó todas las validaciones, actualizamos el estado
         this.estado = nuevoEstado;
+    }
+
+    /**
+     * Asigna un repartidor al envío validando las reglas de negocio:
+     * - El envío debe encontrarse en un estado previo a EN_RUTA (estrictamente PENDIENTE).
+     * - El repartidor debe existir y encontrarse en estado ACTIVO.
+     *
+     * @param repartidor Repartidor a vincular al paquete.
+     * @throws ReglaNegocioException si no se cumplen las condiciones.
+     */
+    public void asignarRepartidor(Repartidor repartidor) {
+        if (this.estado != EstadoEnvio.PENDIENTE) {
+            throw new ReglaNegocioException(
+                    "Operación inválida: No se puede asignar un repartidor a un envío en estado " + this.estado + ". Debe encontrarse en estado PENDIENTE."
+            );
+        }
+        if (repartidor == null) {
+            throw new ReglaNegocioException("Error de validación: El repartidor a asignar no puede ser nulo.");
+        }
+        if (repartidor.getEstado() != EstadoRepartidor.ACTIVO) {
+            throw new ReglaNegocioException(
+                    "Operación no permitida: El repartidor debe estar estrictamente en estado ACTIVO para ser asignado. Estado actual: " + repartidor.getEstado()
+            );
+        }
+        this.repartidor = repartidor;
     }
 }
