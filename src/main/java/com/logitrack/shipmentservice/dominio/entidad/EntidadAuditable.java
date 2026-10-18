@@ -9,6 +9,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 /**
  * Superclase abastracta que provee el identificador UUID y los atributos de auditoria
  * para registrar de forma automatica la creacion y actualizacion de los registros.
@@ -26,7 +28,7 @@ public class EntidadAuditable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false, length = 36)
-    private String id;
+    private UUID id;
 
     @CreatedDate
     @Column(name = "fecha_creacion", nullable = false, updatable = false)

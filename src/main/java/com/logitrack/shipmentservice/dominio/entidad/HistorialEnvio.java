@@ -18,7 +18,7 @@ public class HistorialEnvio {
     private UUID id;
 
     @Column(name = "envio_id", nullable = false)
-    private String envioId;
+    private UUID envioId;
 
     @Column(name = "estado_anterior", length = 30)
     private String estadoAnterior;
@@ -30,7 +30,7 @@ public class HistorialEnvio {
     private LocalDateTime fechaHora;
 
     @Column(name = "usuario_actor", length = 100)
-    private String usuarioActor; // Por ahora podemos dejarlo en "SISTEMA"
+    private String usuarioActor;
 
     // TODO: Si se necesita, podemos agregar una relación @ManyToOne real al Envio,
     // pero guardar el envioId es más eficiente para auditoría.

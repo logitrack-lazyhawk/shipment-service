@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record EnvioEstadoCambiadoEvent(
-        String envioId,
+        UUID envioId,
         EstadoEnvio estadoAnterior,
         EstadoEnvio estadoNuevo,
         LocalDateTime fechaHora
