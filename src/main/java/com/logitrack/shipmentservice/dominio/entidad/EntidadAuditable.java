@@ -1,7 +1,11 @@
 package com.logitrack.shipmentservice.dominio.entidad;
 
-
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -12,9 +16,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Superclase abastracta que provee el identificador UUID y los atributos de auditoria
+ * Superclase abstracta que provee el identificador UUID y los atributos de auditoria
  * para registrar de forma automatica la creacion y actualizacion de los registros.
- * Aplicamos el patron MappedSuperclass para delegar sus columnas a las tablas hijas.
+ * El ID se almacena como BINARY(16) para máxima optimización de almacenamiento e índices.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 - Equipo lazyHawk
  * @version 1.0.0
@@ -27,7 +31,7 @@ public class EntidadAuditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false, length = 36)
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "binary(16)")
     private UUID id;
 
     @CreatedDate

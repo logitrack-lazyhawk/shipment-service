@@ -2,6 +2,7 @@ package com.logitrack.shipmentservice.dominio.entidad;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,9 +16,10 @@ public class HistorialEnvio {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "binary(16)")
     private UUID id;
 
-    @Column(name = "envio_id", nullable = false)
+    @Column(name = "envio_id", nullable = false, columnDefinition = "binary(16)")
     private UUID envioId;
 
     @Column(name = "estado_anterior", length = 30)
