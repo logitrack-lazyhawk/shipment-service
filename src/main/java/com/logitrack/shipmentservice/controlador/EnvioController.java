@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Controlador REST para la gestion principal de envios.
@@ -26,11 +27,10 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/api/envios")
+@RequestMapping("/api/v1/envios")
 @RequiredArgsConstructor
 @Tag(name = "Gestion de envios", description = "Endpoints transaccionales para el ciclo de vida de los paquetes")
 public class EnvioController {
-    private final EnvioServicio envioService;
     private final EnvioServicio envioServicio;
 
     /**
@@ -47,7 +47,7 @@ public class EnvioController {
     })
     @PostMapping
     public ResponseEntity<EnvioResponseDto> registrarEnvio(@Valid @RequestBody EnvioRequestDto peticion) {
-        EnvioResponseDto respuesta = envioService.registrarEnvio(peticion);
+        EnvioResponseDto respuesta = envioServicio.registrarEnvio(peticion);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 
@@ -59,7 +59,7 @@ public class EnvioController {
      */
     @Operation(summary = "Obtener un envío por su UUID")
     @GetMapping("/{id}")
-    public ResponseEntity<EnvioResponseDto> obtenerPorId(@PathVariable String id) {
+    public ResponseEntity<EnvioResponseDto> obtenerPorId(@PathVariable UUID id) {
         return ResponseEntity.ok(envioServicio.obtenerPorId(id));
     }
 
@@ -101,10 +101,10 @@ public class EnvioController {
             @ApiResponse(responseCode = "404", description = "Envío no encontrado")
     })
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<EnvioResponseDto> cancelarEnvio(@PathVariable String id) {
-        return ResponseEntity.ok(envioService.cancelarEnvio(id));
+    public ResponseEntity<EnvioResponseDto> cancelarEnvio(@PathVariable UUID id) {
+        return ResponseEntity.ok(envioServicio.cancelarEnvio(id));
     }
-    // Agregamos el endpoint
+
     @Operation(summary = "Cambiar el estado de un envío")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estado cambiado exitosamente"),
@@ -113,7 +113,7 @@ public class EnvioController {
     })
     @PatchMapping("/{id}/estado")
     public ResponseEntity<EnvioResponseDto> cambiarEstado(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @RequestBody @Valid CambiarEstadoRequestDto request) {
         return ResponseEntity.ok(envioServicio.cambiarEstado(id, request.nuevoEstado()));
     }

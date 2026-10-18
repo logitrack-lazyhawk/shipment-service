@@ -48,9 +48,10 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return mapearHaciaResponse(envioGuardado);
     }
+
     @Override
     @Transactional(readOnly = true)
-    public EnvioResponseDto obtenerPorId(String id) {
+    public EnvioResponseDto obtenerPorId(UUID id) {
         Envio envio = envioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
         return mapearHaciaResponse(envio);
@@ -78,9 +79,10 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .map(this::mapearHaciaResponse)
                 .toList();
     }
+
     @Override
     @Transactional
-    public EnvioResponseDto cancelarEnvio(String id) {
+    public EnvioResponseDto cancelarEnvio(UUID id) {
         Envio envio = envioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
 
@@ -100,9 +102,10 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return hashGenerado;
     }
+
     @Override
     @Transactional
-    public EnvioResponseDto cambiarEstado(String id, EstadoEnvio nuevoEstado) {
+    public EnvioResponseDto cambiarEstado(UUID id, EstadoEnvio nuevoEstado) {
         Envio envio = envioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
 
@@ -114,7 +117,7 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         // 2. Publicamos el evento
         eventPublisher.publishEvent(new EnvioEstadoCambiadoEvent(
-                envioActualizado.getId(), // Ahora sí coinciden los tipos (String)
+                envioActualizado.getId(),
                 estadoAnterior,
                 envioActualizado.getEstado(),
                 LocalDateTime.now()
@@ -134,10 +137,9 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .build();
     }
 
-    //Modifique esta funcion
     private Direccion mapearDireccionVO(DireccionDto dto) {
         if (dto == null) {
-            return null; // O podríamos lanzar una excepción si las direcciones son obligatorias
+            return null;
         }
         return Direccion.builder()
                 .calle(dto.calle())
@@ -149,7 +151,6 @@ public class EnvioServiceImpl implements EnvioServicio {
                 .descripcion(dto.descripcion())
                 .build();
     }
-
 
     private EnvioResponseDto mapearHaciaResponse(Envio envio) {
         return new EnvioResponseDto(
