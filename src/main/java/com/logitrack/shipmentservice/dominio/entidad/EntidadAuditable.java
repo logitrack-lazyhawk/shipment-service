@@ -30,7 +30,6 @@ import java.util.UUID;
 public class EntidadAuditable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "binary(16)")
     private UUID id;
 

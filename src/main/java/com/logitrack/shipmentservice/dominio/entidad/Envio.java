@@ -88,8 +88,11 @@ public class Envio extends EntidadAuditable {
     @JoinColumn(name = "repartidor_id", columnDefinition = "binary(16)")
     private Repartidor repartidor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id")
+    private Cliente cliente;
+
     /**
-     * TODO: Implementar relación ManyToOne con Cliente cuando se modele dicha entidad (FetchType.LAZY).
      * TODO: Integrar lógica de validación de pago antes de despachar el envío.
      */
 
