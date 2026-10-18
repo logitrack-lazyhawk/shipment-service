@@ -43,19 +43,24 @@ El microservicio está construido bajo principios de Clean Code, con persistenci
 ## Arquitectura
 
 El proyecto sigue una arquitectura en capas claramente separadas:
-com.logitrack.shipmentservice
-├── controlador
-├── dominio
-│   ├── dto
-│   ├── entidad
-│   ├── enumerador
-│   ├── evento
-│   ├── exception
-│   └── valueObject
-├── repositorio
-├── servicio
-└── ShipmentServiceApplication
-
+```text
+com.logitrack.shipment
+├── controller         # Capa de exposición (API REST)
+│   ├── dto            # DTOs de Request y Response (aislados del dominio)
+│   └── EnvioController.java
+├── service            # Lógica de negocio (Casos de uso)
+│   ├── impl           # Implementaciones de los servicios
+│   └── EnvioService.java
+├── repository         # Capa de acceso a datos (Spring Data JPA)
+│   └── EnvioRepository.java
+├── domain             # Core del negocio (Puro, sin dependencias web)
+│   ├── entity         # Entidades JPA (Envio, Repartidor, AuditableEntity)
+│   ├── enums          # Enumeradores (EstadoEnvio, EstadoRepartidor)
+│   └── vo             # Value Objects (@Embeddable Direccion)
+├── exception          # Manejo global de errores (@RestControllerAdvice)
+├── config             # Configuraciones (Swagger, Beans, etc.)
+└── ShipmentServiceApplication.java
+```
 - **DTOs** para desacoplar el contrato de la API de las entidades JPA
 - **UUID** como identificador de todas las entidades
 - **Value Objects** para modelar conceptos del dominio (ej. Dirección)
@@ -104,29 +109,32 @@ Cobertura sobre el cálculo de tarifa y las validaciones de la máquina de estad
 ## Pruebas de integración
 Repositorios con @DataJpaTest
 Endpoints con @WebMvcTest / @SpringBootTest
-
-## Estructura del proyecto
-textsrc/
+```text
+## Estructura del proyectosrc/
 ├── main/
 │   ├── java/
-│   │   └── com/logitrack/shipmentservice/
-│   │       ├── controlador/
-│   │       ├── dominio/
-│   │       │   ├── dto/
-│   │       │   ├── entidad/
-│   │       │   ├── enumerador/
-│   │       │   ├── evento/
-│   │       │   ├── exception/
-│   │       │   └── valueObject/
-│   │       ├── repositorio/
-│   │       ├── servicio/
-│   │       └── ShipmentServiceApplication.java
+│   │   └── com/
+│   │       └── logitrack/
+│   │           └── shipmentservice/
+│   │               ├── controlador/
+│   │               ├── dominio/
+│   │               │   ├── dto/
+│   │               │   ├── entidad/
+│   │               │   ├── enumerador/
+│   │               │   ├── evento/
+│   │               │   ├── exception/
+│   │               │   └── valueObject/
+│   │               ├── repositorio/
+│   │               ├── servicio/
+│   │               └── ShipmentServiceApplication.java
 │   └── resources/
 │       └── application.yml
 └── test/
     └── java/
-        └── com/logitrack/shipmentservice/
-
+        └── com/
+            └── logitrack/
+                └── shipmentservice/
+```
 ## Buenas prácticas aplicadas
 Clean Code
 Principios REST (recursos en plural, verbos HTTP correctos)
@@ -139,8 +147,9 @@ Dockerfile multi-stage optimizado
 docker-compose para entorno reproducible
 
 ## Autores
-* Mamani, Luis Carlos Manuel(https://github.com/LuisMPlus)
-* Maygua Altamirano, Pio Roman(https://github.com/95670446-maker)
-* Mamani Leandro(https://github.com/leoM2022)
+* Mamani, Luis Carlos Manuel - https://github.com/LuisMPlus
+* Maygua Altamirano, Pio Roman - https://github.com/95670446-maker
+* Mamani Leandro - https://github.com/leoM2022
+  
 Desarrollado como parte del Sprint 1 – Core de Negocio y Dominio Relacional
 LazyHawk · Desarrollo y Arquitecturas Avanzadas de Software
