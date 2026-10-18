@@ -15,7 +15,6 @@ import java.util.UUID;
 public class HistorialEnvio {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", columnDefinition = "binary(16)")
     private UUID id;
 
