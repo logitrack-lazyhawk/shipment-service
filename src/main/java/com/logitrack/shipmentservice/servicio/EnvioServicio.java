@@ -20,4 +20,5 @@ public interface EnvioServicio {
     List<EnvioResponseDto> listarEnvios(EstadoEnvio estado);
     EnvioResponseDto cancelarEnvio(UUID id);
     EnvioResponseDto cambiarEstado(UUID id, EstadoEnvio nuevoEstado);
+    EnvioResponseDto asignarRepartidor(UUID envioId, UUID repartidorId);
 }

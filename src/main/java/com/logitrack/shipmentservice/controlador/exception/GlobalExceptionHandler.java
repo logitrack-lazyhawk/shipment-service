@@ -1,6 +1,7 @@
 package com.logitrack.shipmentservice.controlador.exception;
 
 import com.logitrack.shipmentservice.dominio.dto.ErrorResponseDto;
+import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
 import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -24,6 +25,21 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ErrorResponseDto> handleReglaNegocio(
+            ReglaNegocioException ex, HttpServletRequest request) {
+
+        ErrorResponseDto respuesta = ErrorResponseDto.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Violación de Regla de Negocio")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+    }
 
     @ExceptionHandler(TransicionEstadoInvalidaException.class)
     public ResponseEntity<ErrorResponseDto> handleTransicionInvalida(

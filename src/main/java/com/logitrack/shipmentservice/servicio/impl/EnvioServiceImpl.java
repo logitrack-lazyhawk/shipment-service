@@ -4,12 +4,14 @@ import com.logitrack.shipmentservice.dominio.dto.DireccionDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
+import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
 import com.logitrack.shipmentservice.dominio.evento.EnvioEstadoCambiadoEvent;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
+import com.logitrack.shipmentservice.servicio.validador.RepartidorValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,7 @@ import java.util.UUID;
 
 /**
  * Implementación de la lógica de negocio para los envíos.
- * Coordina la generación de códigos hash únicos, cálculos de tarifa y persistencia.
+ * Coordina la generación de códigos hash únicos, cálculos de tarifa, persistencia y asignación de repartidores.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
@@ -32,6 +34,7 @@ import java.util.UUID;
 public class EnvioServiceImpl implements EnvioServicio {
 
     private final EnvioRepository envioRepository;
+    private final RepartidorValidator repartidorValidator;
     private final HistorialEnvioRepository historialRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -92,17 +95,6 @@ public class EnvioServiceImpl implements EnvioServicio {
         return mapearHaciaResponse(envioGuardado);
     }
 
-    private String generarHashUnico() {
-        String hashGenerado;
-        do {
-            String marcaTiempo = String.valueOf(Instant.now().toEpochMilli());
-            String sufijoAleatorio = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
-            hashGenerado = "LT-" + marcaTiempo.substring(marcaTiempo.length() - 6) + "-" + sufijoAleatorio;
-        } while (envioRepository.existsByCodigoSeguimiento(hashGenerado));
-
-        return hashGenerado;
-    }
-
     @Override
     @Transactional
     public EnvioResponseDto cambiarEstado(UUID id, EstadoEnvio nuevoEstado) {
@@ -124,6 +116,32 @@ public class EnvioServiceImpl implements EnvioServicio {
         ));
 
         return mapearHaciaResponse(envioActualizado);
+    }
+
+    @Override
+    @Transactional
+    public EnvioResponseDto asignarRepartidor(UUID envioId, UUID repartidorId) {
+        Envio envio = envioRepository.findById(envioId)
+                .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
+
+        Repartidor repartidor = repartidorValidator.validarYObtenerPorId(repartidorId);
+
+        // Validaciones de negocio encapsuladas en la entidad
+        envio.asignarRepartidor(repartidor);
+        Envio envioGuardado = envioRepository.save(envio);
+
+        return mapearHaciaResponse(envioGuardado);
+    }
+
+    private String generarHashUnico() {
+        String hashGenerado;
+        do {
+            String marcaTiempo = String.valueOf(Instant.now().toEpochMilli());
+            String sufijoAleatorio = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+            hashGenerado = "LT-" + marcaTiempo.substring(marcaTiempo.length() - 6) + "-" + sufijoAleatorio;
+        } while (envioRepository.existsByCodigoSeguimiento(hashGenerado));
+
+        return hashGenerado;
     }
 
     private Envio mapearDesdeRequest(EnvioRequestDto dto) {
@@ -163,11 +181,15 @@ public class EnvioServiceImpl implements EnvioServicio {
                 envio.getTarifa(),
                 envio.getEstado(),
                 mapearDireccionDto(envio.getOrigen()),
-                mapearDireccionDto(envio.getDestino())
+                mapearDireccionDto(envio.getDestino()),
+                envio.getRepartidor() != null ? envio.getRepartidor().getId() : null
         );
     }
 
     private DireccionDto mapearDireccionDto(Direccion vo) {
+        if (vo == null) {
+            return null;
+        }
         return new DireccionDto(
                 vo.getCalle(),
                 vo.getNumero(),
