@@ -11,7 +11,8 @@ El microservicio está construido bajo principios de Clean Code, con persistenci
 
 ## Alcance funcional
 - UML modificado
-<img width="1423" height="853" alt="image" src="https://github.com/user-attachments/assets/f6269f72-9afc-4597-a2fb-5d2b2c86cb27" />
+<img width="1409" height="833" alt="image" src="https://github.com/user-attachments/assets/ffa90788-4cb3-47e8-91db-951fed53838f" />
+
 
 
 ### Gestión de envíos
