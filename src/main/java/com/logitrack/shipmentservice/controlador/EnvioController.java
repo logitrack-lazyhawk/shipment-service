@@ -12,6 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,13 +41,13 @@ public class EnvioController {
      * Registra un nuevo envío en la plataforma LogiTrack.
      * Genera automáticamente el Hash único de seguimiento y establece el estado en PENDIENTE.
      *
-     * @param peticion Objeto de transferencia con dimensiones, peso y direcciones de origen y destino.
-     * @return El envío persistido con su UUID, código Hash de seguimiento y tarifa calculada.
+     * @param peticion Datos dimensionales y de ruteo del paquete.
+     * @return El envío registrado con su código de seguimiento generado.
      */
-    @Operation(summary = "Registrar un nuevo envío y calcular su tarifa operativa")
+    @Operation(summary = "Crear y registrar un nuevo envío")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Envío registrado exitosamente en la base de datos"),
-            @ApiResponse(responseCode = "400", description = "Los datos enviados en la petición no son válidos")
+            @ApiResponse(responseCode = "201", description = "Envío registrado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos en la petición")
     })
     @PostMapping
     public ResponseEntity<EnvioResponseDto> registrarEnvio(@Valid @RequestBody EnvioRequestDto peticion) {
@@ -53,10 +56,10 @@ public class EnvioController {
     }
 
     /**
-     * Consulta el detalle de un envío específico utilizando su identificador único.
+     * Recupera la información detallada de un envío a partir de su ID.
      *
-     * @param id Identificador UUID del envío.
-     * @return El detalle completo del paquete.
+     * @param id Identificador UUID del paquete.
+     * @return Los datos del envío si existe.
      */
     @Operation(summary = "Obtener un envío por su UUID")
     @GetMapping("/{id}")
@@ -86,6 +89,21 @@ public class EnvioController {
     @GetMapping
     public ResponseEntity<List<EnvioResponseDto>> listarEnvios(@RequestParam(required = false) EstadoEnvio estado) {
         return ResponseEntity.ok(envioServicio.listarEnvios(estado));
+    }
+
+    /**
+     * Consulta la lista paginada de envíos registrados, permitiendo un filtrado opcional por estado.
+     *
+     * @param estado Estado operativo del envío a filtrar (opcional).
+     * @param pageable Configuración de paginación (page, size, sort). Por defecto página 0 y tamaño 10.
+     * @return Página de envíos que coinciden con el criterio.
+     */
+    @Operation(summary = "Listar envíos paginados (con filtrado opcional por estado)")
+    @GetMapping({"/paginados", "/paginado"})
+    public ResponseEntity<Page<EnvioResponseDto>> listarEnviosPaginados(
+            @RequestParam(required = false) EstadoEnvio estado,
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        return ResponseEntity.ok(envioServicio.listarEnviosPaginados(estado, pageable));
     }
 
     /**
@@ -120,13 +138,11 @@ public class EnvioController {
     }
 
     /**
-     * Vincula un repartidor al envío antes de iniciar el viaje.
-     * Valida que el envío se encuentre en un estado previo a EN_RUTA (estrictamente PENDIENTE)
-     * y que el repartidor exista y esté en estado ACTIVO.
+     * Asigna un repartidor a un paquete en estado PENDIENTE.
      *
-     * @param id Identificador UUID del envío.
-     * @param request Objeto que contiene el UUID del repartidor a asignar.
-     * @return El detalle del paquete actualizado con el repartidor asignado.
+     * @param id Identificador UUID del envío a actualizar.
+     * @param request Cuerpo con el ID del repartidor que tomará el paquete.
+     * @return El envío con el repartidor asignado.
      */
     @Operation(summary = "Asignar un repartidor a un paquete antes de iniciar el viaje")
     @ApiResponses(value = {

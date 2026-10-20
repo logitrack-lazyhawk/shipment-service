@@ -11,9 +11,12 @@ import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
+import com.logitrack.shipmentservice.servicio.util.PageableSanitizer;
 import com.logitrack.shipmentservice.servicio.validador.RepartidorValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +40,7 @@ public class EnvioServiceImpl implements EnvioServicio {
     private final RepartidorValidator repartidorValidator;
     private final HistorialEnvioRepository historialRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PageableSanitizer pageableSanitizer;
 
     @Override
     @Transactional
@@ -81,6 +85,18 @@ public class EnvioServiceImpl implements EnvioServicio {
         return listaEnvios.stream()
                 .map(this::mapearHaciaResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EnvioResponseDto> listarEnviosPaginados(EstadoEnvio estado, Pageable pageable) {
+        Pageable pageableSanitizado = (pageableSanitizer != null) ? pageableSanitizer.sanitizar(pageable) : pageable;
+
+        Page<Envio> paginaEnvios = (estado != null)
+                ? envioRepository.findByEstado(estado, pageableSanitizado)
+                : envioRepository.findAll(pageableSanitizado);
+
+        return paginaEnvios.map(this::mapearHaciaResponse);
     }
 
     @Override

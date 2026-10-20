@@ -2,6 +2,8 @@ package com.logitrack.shipmentservice.repositorio;
 
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -23,4 +25,6 @@ public interface EnvioRepository extends JpaRepository<Envio, UUID> {
     Optional<Envio> findByCodigoSeguimiento(String codigoSeguimiento);
 
     List<Envio> findByEstado(EstadoEnvio estado);
+
+    Page<Envio> findByEstado(EstadoEnvio estado, Pageable pageable);
 }
