@@ -47,7 +47,7 @@ class EnvioControllerAsignarRepartidorTest {
     }
 
     @Test
-    @DisplayName("POST /api/envios/{id}/asignar-repartidor retorna 200 cuando es exitoso")
+    @DisplayName("POST /api/v1/envios/{id}/asignar-repartidor retorna 200 cuando es exitoso")
     void asignarRepartidor_Retorna200() throws Exception {
         UUID envioId = UUID.randomUUID();
         UUID repartidorId = UUID.randomUUID();
@@ -60,7 +60,7 @@ class EnvioControllerAsignarRepartidorTest {
 
         when(envioServicio.asignarRepartidor(envioId, repartidorId)).thenReturn(responseDto);
 
-        mockMvc.perform(post("/api/envios/{id}/asignar-repartidor", envioId)
+        mockMvc.perform(post("/api/v1/envios/{id}/asignar-repartidor", envioId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
@@ -69,7 +69,7 @@ class EnvioControllerAsignarRepartidorTest {
     }
 
     @Test
-    @DisplayName("POST /api/envios/{id}/asignar-repartidor retorna 400 cuando viola regla de negocio")
+    @DisplayName("POST /api/v1/envios/{id}/asignar-repartidor retorna 400 cuando viola regla de negocio")
     void asignarRepartidor_Retorna400_ReglaNegocio() throws Exception {
         UUID envioId = UUID.randomUUID();
         UUID repartidorId = UUID.randomUUID();
@@ -79,7 +79,7 @@ class EnvioControllerAsignarRepartidorTest {
         when(envioServicio.asignarRepartidor(envioId, repartidorId))
                 .thenThrow(new ReglaNegocioException("Operación inválida: No se puede asignar un repartidor a un envío en estado EN_RUTA."));
 
-        mockMvc.perform(post("/api/envios/{id}/asignar-repartidor", envioId)
+        mockMvc.perform(post("/api/v1/envios/{id}/asignar-repartidor", envioId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isBadRequest())
@@ -89,7 +89,7 @@ class EnvioControllerAsignarRepartidorTest {
     }
 
     @Test
-    @DisplayName("POST /api/envios/{id}/asignar-repartidor retorna 404 cuando el recurso no existe")
+    @DisplayName("POST /api/v1/envios/{id}/asignar-repartidor retorna 404 cuando el recurso no existe")
     void asignarRepartidor_Retorna404_NoExiste() throws Exception {
         UUID envioId = UUID.randomUUID();
         UUID repartidorId = UUID.randomUUID();
@@ -99,7 +99,7 @@ class EnvioControllerAsignarRepartidorTest {
         when(envioServicio.asignarRepartidor(envioId, repartidorId))
                 .thenThrow(new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
 
-        mockMvc.perform(post("/api/envios/{id}/asignar-repartidor", envioId)
+        mockMvc.perform(post("/api/v1/envios/{id}/asignar-repartidor", envioId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isNotFound())
