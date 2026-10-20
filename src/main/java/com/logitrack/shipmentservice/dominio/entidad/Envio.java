@@ -7,6 +7,7 @@ import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaE
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -15,16 +16,22 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entidad principal que representa un paquete o envío dentro del sistema LogiTrack.
- * Gestiona la información física, las direcciones, su ciclo de vida operativo y el repartidor asignado.
+ * Gestiona la información física, las direcciones, su ciclo de vida operativo,
+ * las asociaciones con repartidor/cliente y su historial de auditoría.
  *
  * @author luisMPlus, 95670446-maker y leoM2022 - Equipo lazyHawk
  * @version 1.0.0
@@ -35,7 +42,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Envio extends EntidadAuditable {
 
     @Column(name = "codigo_seguimiento", nullable = false, unique = true, length = 50)
@@ -89,12 +96,12 @@ public class Envio extends EntidadAuditable {
     private Repartidor repartidor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
+    @JoinColumn(name = "cliente_id", columnDefinition = "binary(16)")
     private Cliente cliente;
 
-    /**
-     * TODO: Integrar lógica de validación de pago antes de despachar el envío.
-     */
+    @OneToMany(mappedBy = "envio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<HistorialEnvio> historial = new ArrayList<>();
 
     /**
      * Calcula la tarifa del envío basándose en el peso y las dimensiones del paquete.

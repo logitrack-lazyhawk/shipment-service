@@ -1,5 +1,6 @@
 package com.logitrack.shipmentservice.repositorio;
 
+import com.logitrack.shipmentservice.ShipmentServiceApplication;
 import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +10,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@ContextConfiguration(classes = ShipmentServiceApplication.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class RepartidorRepositoryTest {
 
@@ -27,6 +30,8 @@ class RepartidorRepositoryTest {
     void save_PersisteRepartidor() {
         Repartidor repartidor = Repartidor.builder()
                 .nombre("Martin Palermo")
+                .dni("20111222")
+                .telefono("+541122334455")
                 .tipoVehiculo("Camioneta")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();
@@ -35,6 +40,8 @@ class RepartidorRepositoryTest {
 
         assertNotNull(guardado.getId());
         assertEquals("Martin Palermo", guardado.getNombre());
+        assertEquals("20111222", guardado.getDni());
+        assertEquals("+541122334455", guardado.getTelefono());
         assertEquals(EstadoRepartidor.ACTIVO, guardado.getEstado());
     }
 
@@ -43,16 +50,22 @@ class RepartidorRepositoryTest {
     void findByEstado_FiltraPorEstado() {
         Repartidor activo1 = Repartidor.builder()
                 .nombre("Repartidor Activo 1")
+                .dni("21111222")
+                .telefono("+541122334456")
                 .tipoVehiculo("Moto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();
         Repartidor activo2 = Repartidor.builder()
                 .nombre("Repartidor Activo 2")
+                .dni("22111222")
+                .telefono("+541122334457")
                 .tipoVehiculo("Auto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();
         Repartidor inactivo = Repartidor.builder()
                 .nombre("Repartidor Inactivo")
+                .dni("23111222")
+                .telefono("+541122334458")
                 .tipoVehiculo("Bicicleta")
                 .estado(EstadoRepartidor.INACTIVO)
                 .build();
@@ -76,6 +89,8 @@ class RepartidorRepositoryTest {
     void delete_AplicaSoftDelete() {
         Repartidor repartidor = Repartidor.builder()
                 .nombre("Juan Román")
+                .dni("24111222")
+                .telefono("+541122334459")
                 .tipoVehiculo("Moto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();

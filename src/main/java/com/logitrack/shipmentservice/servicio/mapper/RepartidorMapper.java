@@ -33,6 +33,8 @@ public class RepartidorMapper {
 
         return Repartidor.builder()
                 .nombre(dto.nombre())
+                .dni(dto.dni())
+                .telefono(dto.telefono())
                 .tipoVehiculo(dto.tipoVehiculo())
                 .estado(estadoInicial)
                 .build();
@@ -52,6 +54,8 @@ public class RepartidorMapper {
         return new RepartidorResponseDto(
                 entity.getId(),
                 entity.getNombre(),
+                entity.getDni(),
+                entity.getTelefono(),
                 entity.getTipoVehiculo(),
                 entity.getEstado()
         );

@@ -12,6 +12,8 @@ import java.util.UUID;
 public record RepartidorResponseDto(
         UUID id,
         String nombre,
+        String dni,
+        String telefono,
         String tipoVehiculo,
         EstadoRepartidor estado
 ) {}

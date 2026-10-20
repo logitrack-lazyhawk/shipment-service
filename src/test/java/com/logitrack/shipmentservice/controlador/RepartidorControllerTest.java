@@ -60,15 +60,17 @@ class RepartidorControllerTest {
         responseDto = new RepartidorResponseDto(
                 repartidorId,
                 "Carlos Gomez",
+                "30111222",
+                "+541144332211",
                 "Moto",
                 EstadoRepartidor.ACTIVO
         );
     }
 
     @Test
-    @DisplayName("POST /api/v1/repartidores retorna 201 Created cuando la petición es válida")
+    @DisplayName("POST /api/v1/repartidores retorna 201 Created cuando la petición es válida (aplica limpieza y normalización E.164)")
     void registrarRepartidor_Valido_Retorna201() throws Exception {
-        RepartidorRequestDto requestDto = new RepartidorRequestDto("Carlos Gomez", "Moto", EstadoRepartidor.ACTIVO);
+        RepartidorRequestDto requestDto = new RepartidorRequestDto("Carlos Gomez", "30.111.222", "11-4433-2211", "Moto", EstadoRepartidor.ACTIVO);
         when(repartidorServicio.registrarRepartidor(any(RepartidorRequestDto.class))).thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/repartidores")
@@ -77,6 +79,8 @@ class RepartidorControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(repartidorId.toString()))
                 .andExpect(jsonPath("$.nombre").value("Carlos Gomez"))
+                .andExpect(jsonPath("$.dni").value("30111222"))
+                .andExpect(jsonPath("$.telefono").value("+541144332211"))
                 .andExpect(jsonPath("$.tipoVehiculo").value("Moto"))
                 .andExpect(jsonPath("$.estado").value("ACTIVO"));
 
@@ -86,7 +90,7 @@ class RepartidorControllerTest {
     @Test
     @DisplayName("POST /api/v1/repartidores retorna 400 Bad Request cuando el nombre está vacío")
     void registrarRepartidor_Invalido_Retorna400() throws Exception {
-        RepartidorRequestDto requestDto = new RepartidorRequestDto("", "Moto", EstadoRepartidor.ACTIVO);
+        RepartidorRequestDto requestDto = new RepartidorRequestDto("", "30111222", "1144332211", "Moto", EstadoRepartidor.ACTIVO);
 
         mockMvc.perform(post("/api/v1/repartidores")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -94,6 +98,51 @@ class RepartidorControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.fieldErrors.nombre").exists());
+
+        verify(repartidorServicio, never()).registrarRepartidor(any());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/repartidores retorna 400 Bad Request cuando el dni está vacío")
+    void registrarRepartidor_DniVacio_Retorna400() throws Exception {
+        RepartidorRequestDto requestDto = new RepartidorRequestDto("Carlos Gomez", "", "1144332211", "Moto", EstadoRepartidor.ACTIVO);
+
+        mockMvc.perform(post("/api/v1/repartidores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.dni").exists());
+
+        verify(repartidorServicio, never()).registrarRepartidor(any());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/repartidores retorna 400 Bad Request cuando el dni tiene menos de 7 dígitos")
+    void registrarRepartidor_DniFormatoInvalido_Retorna400() throws Exception {
+        RepartidorRequestDto requestDto = new RepartidorRequestDto("Carlos Gomez", "12345", "1144332211", "Moto", EstadoRepartidor.ACTIVO);
+
+        mockMvc.perform(post("/api/v1/repartidores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.dni").exists());
+
+        verify(repartidorServicio, never()).registrarRepartidor(any());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/repartidores retorna 400 Bad Request cuando el teléfono no es válido")
+    void registrarRepartidor_TelefonoInvalido_Retorna400() throws Exception {
+        RepartidorRequestDto requestDto = new RepartidorRequestDto("Carlos Gomez", "30111222", "123", "Moto", EstadoRepartidor.ACTIVO);
+
+        mockMvc.perform(post("/api/v1/repartidores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.telefono").exists());
 
         verify(repartidorServicio, never()).registrarRepartidor(any());
     }
@@ -110,6 +159,8 @@ class RepartidorControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(repartidorId.toString()))
                 .andExpect(jsonPath("$.content[0].nombre").value("Carlos Gomez"))
+                .andExpect(jsonPath("$.content[0].dni").value("30111222"))
+                .andExpect(jsonPath("$.content[0].telefono").value("+541144332211"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         verify(repartidorServicio).listarRepartidores(isNull(), any());
@@ -137,7 +188,9 @@ class RepartidorControllerTest {
         mockMvc.perform(get("/api/v1/repartidores/{id}", repartidorId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(repartidorId.toString()))
-                .andExpect(jsonPath("$.nombre").value("Carlos Gomez"));
+                .andExpect(jsonPath("$.nombre").value("Carlos Gomez"))
+                .andExpect(jsonPath("$.dni").value("30111222"))
+                .andExpect(jsonPath("$.telefono").value("+541144332211"));
 
         verify(repartidorServicio).obtenerPorId(repartidorId);
     }

@@ -2,34 +2,29 @@ package com.logitrack.shipmentservice.dominio.entidad;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
+/**
+ * Entidad que representa a un cliente emisor o receptor en LogiTrack.
+ * Hereda los atributos de Persona y EntidadAuditable (UUID y fechas de auditoría).
+ *
+ * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
+ * @version 1.0.0
+ */
 @Entity
 @Table(name = "clientes")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Cliente {
+@SuperBuilder
+public class Cliente extends Persona {
 
-    @Id
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "VARCHAR(36)")
-    private UUID id = UUID.randomUUID();
-
-    @Column(name = "nombre", nullable = false)
-    private String nombre;
-
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, length = 150)
     private String email;
-
-    @Column(name = "telefono")
-    private String telefono;
 }
