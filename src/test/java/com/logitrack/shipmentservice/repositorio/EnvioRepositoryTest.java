@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -38,5 +40,18 @@ class EnvioControllerTest {
         assertNotNull(resultado);
         assertEquals(HttpStatus.CREATED, resultado.getStatusCode());
         verify(envioService, times(1)).registrarEnvio(any());
+    }
+
+    @Test
+    @DisplayName("Debe retornar 200 OK con página de envíos")
+    void listarEnviosPaginados_Exitoso() {
+        Page<EnvioResponseDto> paginaMock = Page.empty();
+        when(envioService.listarEnviosPaginados(any(), any())).thenReturn(paginaMock);
+
+        ResponseEntity<Page<EnvioResponseDto>> respuesta = envioController.listarEnviosPaginados(null, PageRequest.of(0, 10));
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        verify(envioService, times(1)).listarEnviosPaginados(any(), any());
     }
 }

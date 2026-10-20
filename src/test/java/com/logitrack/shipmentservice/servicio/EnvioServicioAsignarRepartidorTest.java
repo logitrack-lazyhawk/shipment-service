@@ -9,6 +9,7 @@ import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.impl.EnvioServiceImpl;
+import com.logitrack.shipmentservice.servicio.util.PageableSanitizer;
 import com.logitrack.shipmentservice.servicio.validador.RepartidorValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,9 @@ class EnvioServicioAsignarRepartidorTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private PageableSanitizer pageableSanitizer;
 
     @InjectMocks
     private EnvioServiceImpl envioServicio;
