@@ -10,8 +10,9 @@ Este servicio constituye el núcleo de negocio del sistema: registra envíos, ca
 El microservicio está construido bajo principios de Clean Code, con persistencia relacional, API REST documentada y manejo centralizado de errores.
 
 ## Alcance funcional
-- UML modificado 
-<img width="965" height="569" alt="image" src="https://github.com/user-attachments/assets/21a0c8a6-5473-4ec5-aa35-916d4c16a73b" />
+- UML modificado
+<img width="1423" height="853" alt="image" src="https://github.com/user-attachments/assets/f6269f72-9afc-4597-a2fb-5d2b2c86cb27" />
+
 
 ### Gestión de envíos
 - Registrar un nuevo envío (cliente, dirección de origen, dirección de destino, peso y dimensiones)
