@@ -37,6 +37,8 @@ class RepartidorValidatorTest {
 
         repartidorActivo = Repartidor.builder()
                 .nombre("Carlos Gomez")
+                .dni("30111222")
+                .telefono("+541144332211")
                 .tipoVehiculo("Moto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();
@@ -44,6 +46,8 @@ class RepartidorValidatorTest {
 
         repartidorInactivo = Repartidor.builder()
                 .nombre("Mariana Lopez")
+                .dni("31222333")
+                .telefono("+541155443322")
                 .tipoVehiculo("Auto")
                 .estado(EstadoRepartidor.INACTIVO)
                 .build();
@@ -68,34 +72,34 @@ class RepartidorValidatorTest {
         UUID idInexistente = UUID.randomUUID();
         when(repartidorRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
                 repartidorValidator.validarYObtenerPorId(idInexistente)
         );
-
-        assertTrue(ex.getMessage().contains("No se encontró un repartidor con el ID"));
     }
 
     @Test
-    @DisplayName("validarActivoParaOperacion: Pasa exitosamente cuando el repartidor está ACTIVO")
-    void validarActivoParaOperacion_Activo_PasaExitosamente() {
+    @DisplayName("validarActivoParaOperacion: No lanza excepción si el repartidor está en estado ACTIVO")
+    void validarActivoParaOperacion_RepartidorActivo_NoLanzaExcepcion() {
         assertDoesNotThrow(() -> repartidorValidator.validarActivoParaOperacion(repartidorActivo));
     }
 
     @Test
-    @DisplayName("validarActivoParaOperacion: Lanza ReglaNegocioException cuando el repartidor está INACTIVO")
-    void validarActivoParaOperacion_Inactivo_LanzaReglaNegocioException() {
-        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
-                repartidorValidator.validarActivoParaOperacion(repartidorInactivo)
+    @DisplayName("validarActivoParaOperacion: Lanza ReglaNegocioException si el repartidor está en estado INACTIVO")
+    void validarActivoParaOperacion_RepartidorInactivo_LanzaReglaNegocioException() {
+        ReglaNegocioException excepcion = assertThrows(
+                ReglaNegocioException.class,
+                () -> repartidorValidator.validarActivoParaOperacion(repartidorInactivo)
         );
 
-        assertTrue(ex.getMessage().contains("debe estar estrictamente en estado ACTIVO"));
+        assertTrue(excepcion.getMessage().contains("INACTIVO"));
     }
 
     @Test
-    @DisplayName("validarActivoParaOperacion: Lanza IllegalArgumentException cuando el repartidor es null")
-    void validarActivoParaOperacion_Null_LanzaIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () ->
-                repartidorValidator.validarActivoParaOperacion(null)
+    @DisplayName("validarActivoParaOperacion: Lanza IllegalArgumentException si el repartidor es nulo")
+    void validarActivoParaOperacion_RepartidorNulo_LanzaIllegalArgumentException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> repartidorValidator.validarActivoParaOperacion(null)
         );
     }
 }

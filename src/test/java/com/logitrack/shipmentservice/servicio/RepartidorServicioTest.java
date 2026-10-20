@@ -57,17 +57,19 @@ class RepartidorServicioTest {
 
         repartidor = Repartidor.builder()
                 .nombre("Carlos Gomez")
+                .dni("30111222")
+                .telefono("+541144332211")
                 .tipoVehiculo("Moto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();
         repartidor.setId(repartidorId);
 
-        requestDto = new RepartidorRequestDto("Carlos Gomez", "Moto", EstadoRepartidor.ACTIVO);
-        responseDto = new RepartidorResponseDto(repartidorId, "Carlos Gomez", "Moto", EstadoRepartidor.ACTIVO);
+        requestDto = new RepartidorRequestDto("Carlos Gomez", "30.111.222", "11-4433-2211", "Moto", EstadoRepartidor.ACTIVO);
+        responseDto = new RepartidorResponseDto(repartidorId, "Carlos Gomez", "30111222", "+541144332211", "Moto", EstadoRepartidor.ACTIVO);
     }
 
     @Test
-    @DisplayName("registrarRepartidor: Registra y retorna el DTO del repartidor persistido")
+    @DisplayName("registrarRepartidor: Registra y retorna el DTO del repartidor persistido con datos limpios y normalizados")
     void registrarRepartidor_Exitoso() {
         when(repartidorMapper.toEntity(requestDto)).thenReturn(repartidor);
         when(repartidorRepository.save(repartidor)).thenReturn(repartidor);
@@ -78,6 +80,8 @@ class RepartidorServicioTest {
         assertNotNull(resultado);
         assertEquals(repartidorId, resultado.id());
         assertEquals("Carlos Gomez", resultado.nombre());
+        assertEquals("30111222", resultado.dni());
+        assertEquals("+541144332211", resultado.telefono());
         assertEquals(EstadoRepartidor.ACTIVO, resultado.estado());
 
         verify(repartidorMapper).toEntity(requestDto);

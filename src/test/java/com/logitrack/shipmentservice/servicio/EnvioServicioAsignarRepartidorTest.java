@@ -67,6 +67,8 @@ class EnvioServicioAsignarRepartidorTest {
 
         repartidor = Repartidor.builder()
                 .nombre("Juan Perez")
+                .dni("32333444")
+                .telefono("+541166554433")
                 .tipoVehiculo("Moto")
                 .estado(EstadoRepartidor.ACTIVO)
                 .build();

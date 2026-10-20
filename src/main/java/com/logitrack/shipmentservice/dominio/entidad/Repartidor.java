@@ -11,12 +11,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SoftDelete;
 import org.hibernate.annotations.SoftDeleteType;
 
 /**
  * Entidad que representa al personal de entrega (repartidor) en la plataforma LogiTrack.
- * Soporta soft delete automático basado en timestamp y gestión de estado operativo.
+ * Soporta soft delete automático basado en timestamp, gestión de estado operativo
+ * y hereda los atributos civiles/contacto de Persona.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
@@ -28,11 +30,8 @@ import org.hibernate.annotations.SoftDeleteType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Repartidor extends EntidadAuditable {
-
-    @Column(name = "nombre", nullable = false, length = 100)
-    private String nombre;
+@SuperBuilder
+public class Repartidor extends Persona {
 
     @Column(name = "tipo_vehiculo", nullable = false, length = 50)
     private String tipoVehiculo;
