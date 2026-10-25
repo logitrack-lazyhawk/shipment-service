@@ -8,16 +8,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SoftDelete;
+import org.hibernate.annotations.SoftDeleteType;
 
 /**
  * Entidad que representa a un cliente emisor o receptor en LogiTrack.
- * Hereda los atributos de Persona y EntidadAuditable (UUID y fechas de auditoría).
+ * Soporta soft delete automático basado en timestamp y hereda los atributos de Persona y EntidadAuditable (UUID y fechas de auditoría).
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
  */
 @Entity
 @Table(name = "clientes")
+@SoftDelete(strategy = SoftDeleteType.TIMESTAMP, columnName = "fecha_eliminacion")
 @Getter
 @Setter
 @NoArgsConstructor

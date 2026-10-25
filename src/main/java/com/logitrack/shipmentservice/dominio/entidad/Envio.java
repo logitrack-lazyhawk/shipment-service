@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -95,8 +96,9 @@ public class Envio extends EntidadAuditable {
     @JoinColumn(name = "repartidor_id", columnDefinition = "binary(16)")
     private Repartidor repartidor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", columnDefinition = "binary(16)")
+    @NotNull(message = "El cliente asociado al envío es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cliente_id", nullable = false, columnDefinition = "binary(16)")
     private Cliente cliente;
 
     @OneToMany(mappedBy = "envio", cascade = CascadeType.ALL, orphanRemoval = true)
