@@ -1,10 +1,12 @@
 package com.logitrack.shipmentservice.servicio;
 
+import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
-import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
+import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.servicio.impl.EnvioServiceImpl;
+import com.logitrack.shipmentservice.servicio.util.PageableSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,15 +14,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 /**
  * Pruebas unitarias para la clase EnvioServiceImpl.
- * Se centra en la lógica de negocio relacionada con el cálculo de tarifas y la gestión de estados de envíos.
+ * Se centra en la lógica de negocio relacionada con el cálculo de tarifas, gestión de estados y listados paginados.
  * Utiliza Mockito para simular el comportamiento del repositorio y verificar interacciones.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
@@ -31,6 +39,9 @@ class EnvioServicioTest {
 
     @Mock
     private EnvioRepository envioRepository;
+
+    @Mock
+    private PageableSanitizer pageableSanitizer;
 
     @InjectMocks
     private EnvioServiceImpl envioServicio;
@@ -77,8 +88,41 @@ class EnvioServicioTest {
         envioEjemplo.setEstado(EstadoEnvio.EN_RUTA);
         UUID id = envioEjemplo.getId();
         when(envioRepository.findById(id)).thenReturn(Optional.of(envioEjemplo));
-        assertThrows(com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException.class,
+        assertThrows(TransicionEstadoInvalidaException.class,
                 () -> envioServicio.cancelarEnvio(id));
         verify(envioRepository, never()).save(any(Envio.class));
+    }
+
+    @Test
+    @DisplayName("listarEnviosPaginados: Retorna página filtrada cuando se pasa estado")
+    void listarEnviosPaginados_ConEstado_RetornaPaginaFiltrada() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(pageableSanitizer.sanitizar(pageable)).thenReturn(pageable);
+
+        Page<Envio> paginaMock = new PageImpl<>(List.of(envioEjemplo), pageable, 1);
+        when(envioRepository.findByEstado(EstadoEnvio.PENDIENTE, pageable)).thenReturn(paginaMock);
+
+        Page<EnvioResponseDto> resultado = envioServicio.listarEnviosPaginados(EstadoEnvio.PENDIENTE, pageable);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getTotalElements());
+        assertEquals(envioEjemplo.getId(), resultado.getContent().get(0).id());
+        verify(envioRepository).findByEstado(EstadoEnvio.PENDIENTE, pageable);
+    }
+
+    @Test
+    @DisplayName("listarEnviosPaginados: Retorna todos paginados cuando el estado es null")
+    void listarEnviosPaginados_SinEstado_RetornaTodos() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(pageableSanitizer.sanitizar(pageable)).thenReturn(pageable);
+
+        Page<Envio> paginaMock = new PageImpl<>(List.of(envioEjemplo), pageable, 1);
+        when(envioRepository.findAll(pageable)).thenReturn(paginaMock);
+
+        Page<EnvioResponseDto> resultado = envioServicio.listarEnviosPaginados(null, pageable);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getTotalElements());
+        verify(envioRepository).findAll(pageable);
     }
 }
