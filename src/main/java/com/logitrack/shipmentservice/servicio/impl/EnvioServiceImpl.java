@@ -3,6 +3,7 @@ package com.logitrack.shipmentservice.servicio.impl;
 import com.logitrack.shipmentservice.dominio.dto.DireccionDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
+import com.logitrack.shipmentservice.dominio.entidad.Cliente;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
@@ -12,6 +13,7 @@ import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
 import com.logitrack.shipmentservice.servicio.EnvioServicio;
 import com.logitrack.shipmentservice.servicio.util.PageableSanitizer;
+import com.logitrack.shipmentservice.servicio.validador.ClienteValidator;
 import com.logitrack.shipmentservice.servicio.validador.RepartidorValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,6 +40,7 @@ public class EnvioServiceImpl implements EnvioServicio {
 
     private final EnvioRepository envioRepository;
     private final RepartidorValidator repartidorValidator;
+    private final ClienteValidator clienteValidator;
     private final HistorialEnvioRepository historialRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PageableSanitizer pageableSanitizer;
@@ -45,8 +48,10 @@ public class EnvioServiceImpl implements EnvioServicio {
     @Override
     @Transactional
     public EnvioResponseDto registrarEnvio(EnvioRequestDto peticion) {
-        Envio nuevoEnvio = mapearDesdeRequest(peticion);
+        Cliente cliente = clienteValidator.validarYObtenerPorId(peticion.clienteId());
 
+        Envio nuevoEnvio = mapearDesdeRequest(peticion);
+        nuevoEnvio.setCliente(cliente);
         nuevoEnvio.setEstado(EstadoEnvio.PENDIENTE);
         nuevoEnvio.setTarifa(nuevoEnvio.calcularTarifa());
         nuevoEnvio.setCodigoSeguimiento(generarHashUnico());
@@ -198,7 +203,8 @@ public class EnvioServiceImpl implements EnvioServicio {
                 envio.getEstado(),
                 mapearDireccionDto(envio.getOrigen()),
                 mapearDireccionDto(envio.getDestino()),
-                envio.getRepartidor() != null ? envio.getRepartidor().getId() : null
+                envio.getRepartidor() != null ? envio.getRepartidor().getId() : null,
+                envio.getCliente() != null ? envio.getCliente().getId() : null
         );
     }
 

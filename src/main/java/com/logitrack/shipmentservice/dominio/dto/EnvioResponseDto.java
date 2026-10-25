@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /**
  * Objeto de transferencia utilizado para enviar la respuesta de un envío.
- * Incluye todos los datos del envío, tarifa, estado y el repartidor asignado si corresponde.
+ * Incluye todos los datos del envío, tarifa, estado, cliente y el repartidor asignado si corresponde.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
@@ -45,7 +45,10 @@ public record EnvioResponseDto(
         DireccionDto destino,
 
         @Schema(description = "Identificador UUID del repartidor asignado, o null si aún no se asignó", example = "11111111-1111-1111-1111-111111111111")
-        UUID repartidorId
+        UUID repartidorId,
+
+        @Schema(description = "Identificador UUID del cliente asociado", example = "22222222-2222-2222-2222-222222222222")
+        UUID clienteId
 ) {
     public EnvioResponseDto(
             UUID id,
@@ -59,6 +62,22 @@ public record EnvioResponseDto(
             DireccionDto origen,
             DireccionDto destino
     ) {
-        this(id, codigoSeguimiento, peso, ancho, alto, largo, tarifa, estado, origen, destino, null);
+        this(id, codigoSeguimiento, peso, ancho, alto, largo, tarifa, estado, origen, destino, null, null);
+    }
+
+    public EnvioResponseDto(
+            UUID id,
+            String codigoSeguimiento,
+            Double peso,
+            Double ancho,
+            Double alto,
+            Double largo,
+            Double tarifa,
+            EstadoEnvio estado,
+            DireccionDto origen,
+            DireccionDto destino,
+            UUID repartidorId
+    ) {
+        this(id, codigoSeguimiento, peso, ancho, alto, largo, tarifa, estado, origen, destino, repartidorId, null);
     }
 }
