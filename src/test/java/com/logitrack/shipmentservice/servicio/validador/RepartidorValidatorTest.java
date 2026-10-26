@@ -1,9 +1,11 @@
 package com.logitrack.shipmentservice.servicio.validador;
 
-import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
-import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
+import com.logitrack.shipmentservice.cliente.courier.CourierClient;
+import com.logitrack.shipmentservice.cliente.courier.dto.RepartidorClientResponseDto;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
-import com.logitrack.shipmentservice.repositorio.RepartidorRepository;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,94 +14,120 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Pruebas unitarias para RepartidorValidator en su integración con CourierClient (OpenFeign).
+ *
+ * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
+ * @version 2.0.0
+ */
 @ExtendWith(MockitoExtension.class)
 class RepartidorValidatorTest {
 
     @Mock
-    private RepartidorRepository repartidorRepository;
+    private CourierClient courierClient;
 
     @InjectMocks
     private RepartidorValidator repartidorValidator;
 
     private UUID repartidorId;
-    private Repartidor repartidorActivo;
-    private Repartidor repartidorInactivo;
+    private RepartidorClientResponseDto repartidorActivoDto;
 
     @BeforeEach
     void setUp() {
         repartidorId = UUID.randomUUID();
-
-        repartidorActivo = Repartidor.builder()
-                .nombre("Carlos Gomez")
-                .dni("30111222")
-                .telefono("+541144332211")
-                .tipoVehiculo("Moto")
-                .estado(EstadoRepartidor.ACTIVO)
-                .build();
-        repartidorActivo.setId(repartidorId);
-
-        repartidorInactivo = Repartidor.builder()
-                .nombre("Mariana Lopez")
-                .dni("31222333")
-                .telefono("+541155443322")
-                .tipoVehiculo("Auto")
-                .estado(EstadoRepartidor.INACTIVO)
-                .build();
-        repartidorInactivo.setId(UUID.randomUUID());
+        repartidorActivoDto = new RepartidorClientResponseDto(
+                repartidorId,
+                "Carlos Gomez",
+                "30111222",
+                "+541144332211",
+                "carlos@email.com",
+                "Moto",
+                "ACTIVO"
+        );
     }
 
     @Test
-    @DisplayName("validarYObtenerPorId: Retorna el repartidor si existe en la base de datos")
-    void validarYObtenerPorId_Existe_RetornaRepartidor() {
-        when(repartidorRepository.findById(repartidorId)).thenReturn(Optional.of(repartidorActivo));
+    @DisplayName("validarDisponibilidadRemota: Retorna DTO cuando el repartidor existe y está ACTIVO")
+    void validarDisponibilidadRemota_RepartidorActivo_RetornaDto() {
+        when(courierClient.consultarDisponibilidad(repartidorId)).thenReturn(repartidorActivoDto);
 
-        Repartidor resultado = repartidorValidator.validarYObtenerPorId(repartidorId);
+        RepartidorClientResponseDto resultado = repartidorValidator.validarDisponibilidadRemota(repartidorId);
 
         assertNotNull(resultado);
-        assertEquals(repartidorId, resultado.getId());
-        assertEquals("Carlos Gomez", resultado.getNombre());
+        assertEquals(repartidorId, resultado.id());
+        assertEquals("ACTIVO", resultado.estado());
+        assertEquals("Carlos Gomez", resultado.nombre());
     }
 
     @Test
-    @DisplayName("validarYObtenerPorId: Lanza IllegalArgumentException si el repartidor no existe")
-    void validarYObtenerPorId_NoExiste_LanzaExcepcion() {
-        UUID idInexistente = UUID.randomUUID();
-        when(repartidorRepository.findById(idInexistente)).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () ->
-                repartidorValidator.validarYObtenerPorId(idInexistente)
+    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando el repartidor tiene estado INACTIVO")
+    void validarDisponibilidadRemota_RepartidorInactivo_LanzaReglaNegocioException() {
+        RepartidorClientResponseDto dtoInactivo = new RepartidorClientResponseDto(
+                repartidorId,
+                "Mariana Lopez",
+                "31222333",
+                "+541155443322",
+                "mariana@email.com",
+                "Auto",
+                "INACTIVO"
         );
-    }
+        when(courierClient.consultarDisponibilidad(repartidorId)).thenReturn(dtoInactivo);
 
-    @Test
-    @DisplayName("validarActivoParaOperacion: No lanza excepción si el repartidor está en estado ACTIVO")
-    void validarActivoParaOperacion_RepartidorActivo_NoLanzaExcepcion() {
-        assertDoesNotThrow(() -> repartidorValidator.validarActivoParaOperacion(repartidorActivo));
-    }
-
-    @Test
-    @DisplayName("validarActivoParaOperacion: Lanza ReglaNegocioException si el repartidor está en estado INACTIVO")
-    void validarActivoParaOperacion_RepartidorInactivo_LanzaReglaNegocioException() {
-        ReglaNegocioException excepcion = assertThrows(
-                ReglaNegocioException.class,
-                () -> repartidorValidator.validarActivoParaOperacion(repartidorInactivo)
+        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+                repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 
-        assertTrue(excepcion.getMessage().contains("INACTIVO"));
+        assertTrue(ex.getMessage().contains("ACTIVO"));
     }
 
     @Test
-    @DisplayName("validarActivoParaOperacion: Lanza IllegalArgumentException si el repartidor es nulo")
-    void validarActivoParaOperacion_RepartidorNulo_LanzaIllegalArgumentException() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> repartidorValidator.validarActivoParaOperacion(null)
+    @DisplayName("validarDisponibilidadRemota: Lanza IllegalArgumentException cuando courier-service retorna 404 Not Found")
+    void validarDisponibilidadRemota_NotFound_LanzaIllegalArgumentException() {
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/repartidores/" + repartidorId + "/disponibilidad",
+                Collections.emptyMap(), null, new RequestTemplate());
+        FeignException.NotFound notFoundException = new FeignException.NotFound("Not Found", request, null, Collections.emptyMap());
+
+        when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(notFoundException);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
+
+        assertTrue(ex.getMessage().contains("No se encontró un repartidor"));
+    }
+
+    @Test
+    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando courier-service retorna 400 Bad Request")
+    void validarDisponibilidadRemota_BadRequest_LanzaReglaNegocioException() {
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/repartidores/" + repartidorId + "/disponibilidad",
+                Collections.emptyMap(), null, new RequestTemplate());
+        FeignException.BadRequest badRequestException = new FeignException.BadRequest("Bad Request", request, null, Collections.emptyMap());
+
+        when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(badRequestException);
+
+        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+                repartidorValidator.validarDisponibilidadRemota(repartidorId)
+        );
+
+        assertTrue(ex.getMessage().contains("inactivo y no está disponible"));
+    }
+
+    @Test
+    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando ocurre error de conexión o 500")
+    void validarDisponibilidadRemota_ErrorConexion_LanzaReglaNegocioException() {
+        when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(new RuntimeException("Connection refused"));
+
+        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+                repartidorValidator.validarDisponibilidadRemota(repartidorId)
+        );
+
+        assertTrue(ex.getMessage().contains("Error de comunicación"));
     }
 }
