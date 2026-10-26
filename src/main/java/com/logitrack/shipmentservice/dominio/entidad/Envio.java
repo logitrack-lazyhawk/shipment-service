@@ -92,9 +92,8 @@ public class Envio extends EntidadAuditable {
     })
     private Direccion destino;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "repartidor_id", columnDefinition = "binary(16)")
-    private Repartidor repartidor;
+    @Column(name = "repartidor_id", columnDefinition = "binary(16)")
+    private UUID repartidorId;
 
     @NotNull(message = "El cliente asociado al envío es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -185,25 +184,20 @@ public class Envio extends EntidadAuditable {
     /**
      * Asigna un repartidor al envío validando las reglas de negocio:
      * - El envío debe encontrarse en un estado previo a EN_RUTA (estrictamente PENDIENTE).
-     * - El repartidor debe existir y encontrarse en estado ACTIVO.
+     * - El identificador del repartidor no debe ser nulo.
      *
-     * @param repartidor Repartidor a vincular al paquete.
+     * @param repartidorId Identificador UUID del repartidor a vincular.
      * @throws ReglaNegocioException si no se cumplen las condiciones.
      */
-    public void asignarRepartidor(Repartidor repartidor) {
+    public void asignarRepartidor(UUID repartidorId) {
         if (this.estado != EstadoEnvio.PENDIENTE) {
             throw new ReglaNegocioException(
                     "Operación inválida: No se puede asignar un repartidor a un envío en estado " + this.estado + ". Debe encontrarse en estado PENDIENTE."
             );
         }
-        if (repartidor == null) {
+        if (repartidorId == null) {
             throw new ReglaNegocioException("Error de validación: El repartidor a asignar no puede ser nulo.");
         }
-        if (repartidor.getEstado() != EstadoRepartidor.ACTIVO) {
-            throw new ReglaNegocioException(
-                    "Operación no permitida: El repartidor debe estar estrictamente en estado ACTIVO para ser asignado. Estado actual: " + repartidor.getEstado()
-            );
-        }
-        this.repartidor = repartidor;
+        this.repartidorId = repartidorId;
     }
 }
