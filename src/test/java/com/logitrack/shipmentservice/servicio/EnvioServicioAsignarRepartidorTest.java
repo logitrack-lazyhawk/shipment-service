@@ -1,10 +1,9 @@
 package com.logitrack.shipmentservice.servicio;
 
+import com.logitrack.shipmentservice.cliente.courier.dto.RepartidorClientResponseDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
-import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
-import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
 import com.logitrack.shipmentservice.repositorio.EnvioRepository;
 import com.logitrack.shipmentservice.repositorio.HistorialEnvioRepository;
@@ -51,7 +50,7 @@ class EnvioServicioAsignarRepartidorTest {
     private UUID envioId;
     private UUID repartidorId;
     private Envio envio;
-    private Repartidor repartidor;
+    private RepartidorClientResponseDto repartidorDto;
 
     @BeforeEach
     void setUp() {
@@ -69,21 +68,22 @@ class EnvioServicioAsignarRepartidorTest {
                 .build();
         envio.setId(envioId);
 
-        repartidor = Repartidor.builder()
-                .nombre("Juan Perez")
-                .dni("32333444")
-                .telefono("+541166554433")
-                .tipoVehiculo("Moto")
-                .estado(EstadoRepartidor.ACTIVO)
-                .build();
-        repartidor.setId(repartidorId);
+        repartidorDto = new RepartidorClientResponseDto(
+                repartidorId,
+                "Juan Perez",
+                "32333444",
+                "+541166554433",
+                "juan@email.com",
+                "Moto",
+                "ACTIVO"
+        );
     }
 
     @Test
     @DisplayName("Debe asignar exitosamente un repartidor ACTIVO a un envío PENDIENTE")
     void asignarRepartidor_Exitoso() {
         when(envioRepository.findById(envioId)).thenReturn(Optional.of(envio));
-        when(repartidorValidator.validarYObtenerPorId(repartidorId)).thenReturn(repartidor);
+        when(repartidorValidator.validarDisponibilidadRemota(repartidorId)).thenReturn(repartidorDto);
         when(envioRepository.save(any(Envio.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EnvioResponseDto respuesta = envioServicio.asignarRepartidor(envioId, repartidorId);
@@ -91,7 +91,7 @@ class EnvioServicioAsignarRepartidorTest {
         assertNotNull(respuesta);
         assertEquals(envioId, respuesta.id());
         assertEquals(repartidorId, respuesta.repartidorId());
-        assertEquals(repartidor, envio.getRepartidor());
+        assertEquals(repartidorId, envio.getRepartidorId());
         verify(envioRepository).save(envio);
     }
 
@@ -100,7 +100,7 @@ class EnvioServicioAsignarRepartidorTest {
     void asignarRepartidor_Falla_EstadoNoPendiente() {
         envio.setEstado(EstadoEnvio.EN_RUTA);
         when(envioRepository.findById(envioId)).thenReturn(Optional.of(envio));
-        when(repartidorValidator.validarYObtenerPorId(repartidorId)).thenReturn(repartidor);
+        when(repartidorValidator.validarDisponibilidadRemota(repartidorId)).thenReturn(repartidorDto);
 
         ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
                 envioServicio.asignarRepartidor(envioId, repartidorId)
@@ -111,11 +111,11 @@ class EnvioServicioAsignarRepartidorTest {
     }
 
     @Test
-    @DisplayName("Debe lanzar excepción si el repartidor se encuentra INACTIVO")
+    @DisplayName("Debe lanzar excepción si el repartidor se encuentra INACTIVO en el servicio remoto")
     void asignarRepartidor_Falla_RepartidorInactivo() {
-        repartidor.setEstado(EstadoRepartidor.INACTIVO);
         when(envioRepository.findById(envioId)).thenReturn(Optional.of(envio));
-        when(repartidorValidator.validarYObtenerPorId(repartidorId)).thenReturn(repartidor);
+        when(repartidorValidator.validarDisponibilidadRemota(repartidorId))
+                .thenThrow(new ReglaNegocioException("Operación no permitida: El repartidor debe estar estrictamente en estado ACTIVO."));
 
         ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
                 envioServicio.asignarRepartidor(envioId, repartidorId)
@@ -134,7 +134,7 @@ class EnvioServicioAsignarRepartidorTest {
                 envioServicio.asignarRepartidor(envioId, repartidorId)
         );
 
-        verify(repartidorValidator, never()).validarYObtenerPorId(any());
+        verify(repartidorValidator, never()).validarDisponibilidadRemota(any());
         verify(envioRepository, never()).save(any());
     }
 
@@ -142,7 +142,7 @@ class EnvioServicioAsignarRepartidorTest {
     @DisplayName("Debe propagar excepción si el repartidor no existe")
     void asignarRepartidor_Falla_RepartidorNoExiste() {
         when(envioRepository.findById(envioId)).thenReturn(Optional.of(envio));
-        when(repartidorValidator.validarYObtenerPorId(repartidorId))
+        when(repartidorValidator.validarDisponibilidadRemota(repartidorId))
                 .thenThrow(new IllegalArgumentException("Error: No se encontró un repartidor con el ID especificado."));
 
         assertThrows(IllegalArgumentException.class, () ->
