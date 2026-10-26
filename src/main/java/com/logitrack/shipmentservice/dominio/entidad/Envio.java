@@ -1,7 +1,6 @@
 package com.logitrack.shipmentservice.dominio.entidad;
 
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
-import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
 import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
@@ -28,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Entidad principal que representa un paquete o envío dentro del sistema LogiTrack.
