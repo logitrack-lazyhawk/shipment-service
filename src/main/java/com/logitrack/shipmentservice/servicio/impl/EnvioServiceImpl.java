@@ -5,7 +5,6 @@ import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
 import com.logitrack.shipmentservice.dominio.entidad.Cliente;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
-import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
 import com.logitrack.shipmentservice.dominio.evento.EnvioEstadoCambiadoEvent;
 import com.logitrack.shipmentservice.dominio.valueObject.Direccion;
@@ -145,10 +144,11 @@ public class EnvioServiceImpl implements EnvioServicio {
         Envio envio = envioRepository.findById(envioId)
                 .orElseThrow(() -> new IllegalArgumentException("Error: No se encontró un envío con el ID especificado."));
 
-        Repartidor repartidor = repartidorValidator.validarYObtenerPorId(repartidorId);
+        // Validar disponibilidad remota en courier-service
+        repartidorValidator.validarDisponibilidadRemota(repartidorId);
 
-        // Validaciones de negocio encapsuladas en la entidad
-        envio.asignarRepartidor(repartidor);
+        // Validaciones de negocio y asignación en la entidad
+        envio.asignarRepartidor(repartidorId);
         Envio envioGuardado = envioRepository.save(envio);
 
         return mapearHaciaResponse(envioGuardado);
@@ -203,7 +203,7 @@ public class EnvioServiceImpl implements EnvioServicio {
                 envio.getEstado(),
                 mapearDireccionDto(envio.getOrigen()),
                 mapearDireccionDto(envio.getDestino()),
-                envio.getRepartidor() != null ? envio.getRepartidor().getId() : null,
+                envio.getRepartidorId(),
                 envio.getCliente() != null ? envio.getCliente().getId() : null
         );
     }

@@ -1,9 +1,9 @@
 package com.logitrack.shipmentservice.servicio.validador;
 
-import com.logitrack.shipmentservice.dominio.entidad.Repartidor;
-import com.logitrack.shipmentservice.dominio.enumerador.EstadoRepartidor;
+import com.logitrack.shipmentservice.cliente.courier.CourierClient;
+import com.logitrack.shipmentservice.cliente.courier.dto.RepartidorClientResponseDto;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
-import com.logitrack.shipmentservice.repositorio.RepartidorRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -11,53 +11,55 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Validador de reglas de negocio y comprobación de existencia para repartidores.
+ * Validador de existencia y disponibilidad de repartidores mediante comunicación remota con courier-service.
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
- * @version 1.0.0
+ * @version 2.0.0
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RepartidorValidator {
 
-    private final RepartidorRepository repartidorRepository;
+    private final CourierClient courierClient;
 
     /**
-     * Valida que un repartidor exista por su ID y lo retorna.
-     * Si no existe, emite un aviso en los logs y lanza IllegalArgumentException (404 Not Found).
+     * Valida que un repartidor exista y esté disponible consultando al microservicio courier-service.
      *
-     * @param id Identificador UUID del repartidor.
-     * @return La entidad Repartidor si fue encontrada.
-     * @throws IllegalArgumentException si no se encuentra el repartidor.
+     * @param id Identificador UUID del repartidor a verificar.
+     * @return DTO con los datos del repartidor remoto si está disponible.
+     * @throws IllegalArgumentException si el repartidor no existe (404 Not Found).
+     * @throws ReglaNegocioException si el repartidor está inactivo o no disponible.
      */
-    public Repartidor validarYObtenerPorId(UUID id) {
-        log.debug("Validando existencia del repartidor con ID: '{}'", id);
+    public RepartidorClientResponseDto validarDisponibilidadRemota(UUID id) {
+        log.debug("Validando disponibilidad remota del repartidor con ID: '{}'", id);
 
-        return repartidorRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("No se encontró ningún repartidor con el ID: '{}'", id);
-                    return new IllegalArgumentException("Error: No se encontró un repartidor con el ID especificado.");
-                });
-    }
+        try {
+            RepartidorClientResponseDto dto = courierClient.consultarDisponibilidad(id);
 
-    /**
-     * Valida que el repartidor esté activo para poder realizar operaciones operativas (ej. ser asignado a un viaje).
-     *
-     * @param repartidor Entidad del repartidor a verificar.
-     * @throws ReglaNegocioException si el repartidor está inactivo.
-     */
-    public void validarActivoParaOperacion(Repartidor repartidor) {
-        if (repartidor == null) {
-            throw new IllegalArgumentException("El repartidor no puede ser nulo.");
-        }
+            if (dto == null) {
+                log.warn("Respuesta nula recibida desde courier-service para el ID: '{}'", id);
+                throw new IllegalArgumentException("Error: No se encontró un repartidor con el ID especificado.");
+            }
 
-        if (repartidor.getEstado() != EstadoRepartidor.ACTIVO) {
-            log.warn("Intento de operación con repartidor inactivo. ID: '{}', Estado: '{}'",
-                    repartidor.getId(), repartidor.getEstado());
-            throw new ReglaNegocioException(
-                    "Operación no permitida: El repartidor debe estar estrictamente en estado ACTIVO. Estado actual: " + repartidor.getEstado()
-            );
+            if ("INACTIVO".equalsIgnoreCase(dto.estado())) {
+                log.warn("El repartidor remoto con ID '{}' se encuentra en estado INACTIVO.", id);
+                throw new ReglaNegocioException("Operación no permitida: El repartidor debe estar estrictamente en estado ACTIVO.");
+            }
+
+            return dto;
+        } catch (FeignException.NotFound e) {
+            log.warn("Repartidor no encontrado en courier-service con ID: '{}'", id);
+            throw new IllegalArgumentException("Error: No se encontró un repartidor con el ID especificado.");
+        } catch (FeignException.BadRequest e) {
+            log.warn("El repartidor con ID '{}' no se encuentra disponible en courier-service: {}", id, e.getMessage());
+            throw new ReglaNegocioException("Operación no permitida: El repartidor se encuentra inactivo y no está disponible.");
+        } catch (Exception e) {
+            if (e instanceof IllegalArgumentException || e instanceof ReglaNegocioException) {
+                throw e;
+            }
+            log.error("Fallo de comunicación con courier-service al consultar repartidor '{}': {}", id, e.getMessage());
+            throw new ReglaNegocioException("Error de comunicación: No fue posible validar la disponibilidad con courier-service.");
         }
     }
 }
