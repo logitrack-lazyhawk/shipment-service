@@ -47,6 +47,21 @@ class EnvioControllerAsignarRepartidorTest {
     }
 
     @Test
+    void asignarRepartidor_CourierNoDisponible_Retorna503() throws Exception {
+        UUID envioId = UUID.randomUUID();
+        UUID repartidorId = UUID.randomUUID();
+        when(envioServicio.asignarRepartidor(envioId, repartidorId))
+                .thenThrow(new IllegalStateException("Servicio no disponible"));
+
+        mockMvc.perform(post("/api/v1/envios/{id}/asignar-repartidor", envioId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AsignarRepartidorRequestDto(repartidorId))))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.path").value("/api/v1/envios/" + envioId + "/asignar-repartidor"));
+    }
+
+    @Test
     @DisplayName("POST /api/v1/envios/{id}/asignar-repartidor retorna 200 cuando es exitoso")
     void asignarRepartidor_Retorna200() throws Exception {
         UUID envioId = UUID.randomUUID();

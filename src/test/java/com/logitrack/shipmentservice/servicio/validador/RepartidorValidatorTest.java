@@ -120,11 +120,11 @@ class RepartidorValidatorTest {
     }
 
     @Test
-    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando ocurre error de conexión o 500")
-    void validarDisponibilidadRemota_ErrorConexion_LanzaReglaNegocioException() {
+    @DisplayName("validarDisponibilidadRemota: Conserva un error técnico para responder 503")
+    void validarDisponibilidadRemota_ErrorConexion_LanzaIllegalStateException() {
         when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(new RuntimeException("Connection refused"));
 
-        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
                 repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 

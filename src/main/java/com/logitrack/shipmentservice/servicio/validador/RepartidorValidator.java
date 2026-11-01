@@ -55,11 +55,12 @@ public class RepartidorValidator {
             log.warn("El repartidor con ID '{}' no se encuentra disponible en courier-service: {}", id, e.getMessage());
             throw new ReglaNegocioException("Operación no permitida: El repartidor se encuentra inactivo y no está disponible.");
         } catch (Exception e) {
-            if (e instanceof IllegalArgumentException || e instanceof ReglaNegocioException) {
+            if (e instanceof IllegalArgumentException || e instanceof ReglaNegocioException
+                    || e instanceof IllegalStateException) {
                 throw e;
             }
             log.error("Fallo de comunicación con courier-service al consultar repartidor '{}': {}", id, e.getMessage());
-            throw new ReglaNegocioException("Error de comunicación: No fue posible validar la disponibilidad con courier-service.");
+            throw new IllegalStateException("Error de comunicación: No fue posible validar la disponibilidad con courier-service.", e);
         }
     }
 }
