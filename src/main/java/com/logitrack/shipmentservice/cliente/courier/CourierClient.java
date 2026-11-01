@@ -13,7 +13,7 @@ import java.util.UUID;
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
  */
-@FeignClient(name = "courier-service", url = "${app.services.courier.url:http://localhost:8081}")
+@FeignClient(name = "courier-service")
 public interface CourierClient {
 
     /**
