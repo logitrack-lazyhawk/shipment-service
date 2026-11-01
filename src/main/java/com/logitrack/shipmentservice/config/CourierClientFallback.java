@@ -24,7 +24,7 @@ public class CourierClientFallback implements FallbackFactory<CourierClient> {
                 throw error;
             }
             throw new IllegalStateException(
-                    "Servicio no disponible: No se pudo consultar courier-service o el tiempo de espera se agotó.", cause);
+                    "Servicio no disponible: No se pudo conectar con courier-service o el tiempo de espera se agotó.", cause);
         };
     }
 }
