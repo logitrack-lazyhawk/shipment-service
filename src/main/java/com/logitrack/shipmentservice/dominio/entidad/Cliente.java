@@ -13,10 +13,10 @@ import org.hibernate.annotations.SoftDeleteType;
 
 /**
  * Entidad que representa a un cliente emisor o receptor en LogiTrack.
- * Soporta soft delete automático basado en timestamp y hereda los atributos de Persona y EntidadAuditable (UUID y fechas de auditoría).
+ * Soporta soft delete automático basado en timestamp y hereda los atributos de auditoría (UUID y fechas).
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
- * @version 1.0.0
+ * @version 1.1.0
  */
 @Entity
 @Table(name = "clientes")
@@ -26,7 +26,16 @@ import org.hibernate.annotations.SoftDeleteType;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Cliente extends Persona {
+public class Cliente extends EntidadAuditable {
+
+    @Column(name = "nombre", nullable = false, length = 100)
+    private String nombre;
+
+    @Column(name = "dni", nullable = false, length = 20)
+    private String dni;
+
+    @Column(name = "telefono", nullable = false, length = 30)
+    private String telefono;
 
     @Column(name = "email", nullable = false, length = 150)
     private String email;

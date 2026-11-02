@@ -1,6 +1,8 @@
 package com.logitrack.shipmentservice.cliente.courier;
 
 import com.logitrack.shipmentservice.cliente.courier.dto.RepartidorClientResponseDto;
+import com.logitrack.shipmentservice.config.CourierClientFallback;
+import com.logitrack.shipmentservice.config.CourierErrorDecoder;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,8 +15,11 @@ import java.util.UUID;
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
  * @version 1.0.0
  */
-@FeignClient(name = "courier-service", url = "${app.services.courier.url:http://localhost:8081}")
-public interface CourierClient {
+@FeignClient(
+        name = "courier-service",
+        configuration = CourierErrorDecoder.class,
+        fallbackFactory = CourierClientFallback.class
+)public interface CourierClient {
 
     /**
      * Consulta la disponibilidad y estado de un repartidor en courier-service.
