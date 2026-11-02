@@ -37,7 +37,7 @@ El microservicio está construido bajo principios de Clean Code, con persistenci
 | Tecnología              | Uso                                    |
 |-------------------------|----------------------------------------|
 | Java 25                 | Lenguaje base                          |
-| Spring Boot 3.x         | Framework principal                    |
+| Spring Boot 4.1.2         | Framework principal                    |
 | Spring Data JPA         | Persistencia                           |
 | MySQL                   | Base de datos relacional               |
 | springdoc-openapi       | Documentación OpenAPI 3 / Swagger      |
@@ -157,3 +157,9 @@ docker-compose para entorno reproducible
   
 Desarrollado como parte del Sprint 1 – Core de Negocio y Dominio Relacional
 LazyHawk · Desarrollo y Arquitecturas Avanzadas de Software
+
+## Sprint 3
+
+Base común: Java 25, Spring Boot 4.1.2 y Spring Cloud 2025.1.4.
+Las trazas se exportan mediante Micrometer/Brave y `spring-boot-starter-zipkin`.
+Consultar la guía `SPRINT3.md` de logitrack-infra para arranque y demostración.
