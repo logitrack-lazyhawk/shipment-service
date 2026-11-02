@@ -132,6 +132,6 @@ public class GlobalExceptionHandler {
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
-        return new ResponseEntity<>(error,check HttpStatus.SERVICE_UNAVAILABLE);
+        return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }
