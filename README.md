@@ -1,8 +1,10 @@
 # Shipment-Service
 
-Microservicio transaccional de **LazyHawk** encargado del ciclo de vida de los envíos, la gestión de repartidores y la asignación de paquetes.
+Microservicio transaccional de **LazyHawk** encargado del ciclo de vida de los envíos, cálculo de tarifas, gestión de clientes y coordinación de asignación de repartidores mediante comunicación inter-servicio.
 
-## Descripción
+---
+
+## 📌 Descripción General
 
 LazyHawk es una plataforma de logística integral orientada a comercios electrónicos y entregas de última milla.  
 Este servicio constituye el núcleo de negocio del sistema: registra envíos, calcula tarifas, controla los estados del paquete, mantiene un historial de auditoría y permite la asignación de repartidores.
@@ -109,7 +111,7 @@ Capa de servicios con JUnit 5 y Mockito
 Cobertura sobre el cálculo de tarifa y las validaciones de la máquina de estados
 ```bash
 ./mvnw test
-```
+```https://github.com/logitrack-lazyhawk/shipment-service/pull/54/conflict?name=README.md&ancestor_oid=6fc00c73247976c15e533f867ce05e9b8a115aa2&base_oid=014e2781b8365ee18303334652cd06794d7d6dd0&head_oid=7ca355fc541449ed7612ee32a03d47eb33ec2582
 ## Pruebas de integración
 Repositorios con @DataJpaTest
 Endpoints con @WebMvcTest / @SpringBootTest

@@ -159,7 +159,12 @@ public class EnvioServiceImpl implements EnvioServicio {
         do {
             String marcaTiempo = String.valueOf(Instant.now().toEpochMilli());
             String sufijoAleatorio = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
-            hashGenerado = "LT-" + marcaTiempo.substring(marcaTiempo.length() - 6) + "-" + sufijoAleatorio;
+            hashGenerado = new StringBuilder()
+                    .append("LT-")
+                    .append(marcaTiempo.substring(marcaTiempo.length() - 6))
+                    .append("-")
+                    .append(sufijoAleatorio)
+                    .toString();
         } while (envioRepository.existsByCodigoSeguimiento(hashGenerado));
 
         return hashGenerado;

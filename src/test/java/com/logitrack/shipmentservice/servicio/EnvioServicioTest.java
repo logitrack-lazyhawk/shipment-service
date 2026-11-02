@@ -1,6 +1,9 @@
 package com.logitrack.shipmentservice.servicio;
 
+import com.logitrack.shipmentservice.dominio.dto.EnvioRequestDto;
 import com.logitrack.shipmentservice.dominio.dto.EnvioResponseDto;
+import com.logitrack.shipmentservice.dominio.entidad.Cliente;
+import com.logitrack.shipmentservice.servicio.validador.ClienteValidator;
 import com.logitrack.shipmentservice.dominio.entidad.Envio;
 import com.logitrack.shipmentservice.dominio.enumerador.EstadoEnvio;
 import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
@@ -42,6 +45,9 @@ class EnvioServicioTest {
 
     @Mock
     private PageableSanitizer pageableSanitizer;
+
+    @Mock
+    private ClienteValidator clienteValidator;
 
     @InjectMocks
     private EnvioServiceImpl envioServicio;
@@ -124,5 +130,29 @@ class EnvioServicioTest {
         assertNotNull(resultado);
         assertEquals(1, resultado.getTotalElements());
         verify(envioRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("registrarEnvio: Genera código de seguimiento con formato LT-XXXXXX-XXXXX usando StringBuilder")
+    void registrarEnvio_GeneraCodigoSeguimientoCorrecto() {
+        UUID clienteId = UUID.randomUUID();
+        Cliente clienteMock = Cliente.builder().id(clienteId).build();
+        when(clienteValidator.validarYObtenerPorId(clienteId)).thenReturn(clienteMock);
+        when(envioRepository.existsByCodigoSeguimiento(anyString())).thenReturn(false);
+        when(envioRepository.save(any(Envio.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EnvioRequestDto peticion = new EnvioRequestDto(
+                clienteId,
+                5.0, 10.0, 10.0, 20.0,
+                null, null
+        );
+
+        EnvioResponseDto respuesta = envioServicio.registrarEnvio(peticion);
+
+        assertNotNull(respuesta);
+        assertNotNull(respuesta.codigoSeguimiento());
+        assertTrue(respuesta.codigoSeguimiento().matches("^LT-\\d{6}-[A-Z0-9]{5}$"));
+        assertEquals(15, respuesta.codigoSeguimiento().length());
+        verify(envioRepository).save(any(Envio.class));
     }
 }
