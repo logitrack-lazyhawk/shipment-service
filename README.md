@@ -40,8 +40,8 @@ El microservicio está construido bajo principios de Clean Code, arquitectura en
 
 ### 3. Máquina de Estados y Auditoría
 - Transición estricta de estados:
-  $$\text{PENDIENTE} \longrightarrow \text{EN_RUTA} \longrightarrow \text{ENTREGADO}$$
-  $$\text{PENDIENTE} \longrightarrow \text{CANCELADO}$$
+  PENDIENTE → EN RUTA → ENTREGADO
+  PENDIENTE → CANCELADO
 - Registro automático en `HistorialEnvio` con cada cambio de estado (trazabilidad, timestamps y usuario).
 
 ### 4. Integración con Courier-Service (Inter-Servicio)
