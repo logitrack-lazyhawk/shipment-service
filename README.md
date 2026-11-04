@@ -1,167 +1,128 @@
-# Shipment-Service
+# 📦 Shipment-Service (LogiTrack)
 
-Microservicio transaccional de **LazyHawk** encargado del ciclo de vida de los envíos, cálculo de tarifas, gestión de clientes y coordinación de asignación de repartidores mediante comunicación inter-servicio.
+[![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.2-green?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2025.1.4-green?logo=spring)](https://spring.io/projects/spring-cloud)
+[![MySQL](https://img.shields.io/badge/MySQL-8.4-blue?logo=mysql)](https://www.mysql.com/)
+
+Microservicio transaccional del ecosistema **LogiTrack (LazyHawk)** encargado del ciclo de vida de los envíos, cálculo de tarifas, gestión de clientes y coordinación de asignación de repartidores mediante comunicación inter-servicio resiliente.
 
 ---
 
 ## 📌 Descripción General
 
-LazyHawk es una plataforma de logística integral orientada a comercios electrónicos y entregas de última milla.  
-Este servicio constituye el núcleo de negocio del sistema: registra envíos, calcula tarifas, controla los estados del paquete, mantiene un historial de auditoría y permite la asignación de repartidores.
+**Shipment-Service** constituye el núcleo de negocio logístico del sistema: registra envíos, calcula tarifas según peso y dimensiones, administra el flujo de estados del paquete (`PENDIENTE` → `EN_RUTA` → `ENTREGADO` / `CANCELADO`), mantiene un historial inmutable de auditoría y se comunica con `courier-service` mediante **OpenFeign y Resilience4j** para verificar y asignar repartidores activos.
 
-El microservicio está construido bajo principios de Clean Code, con persistencia relacional, API REST documentada y manejo centralizado de errores.
+El microservicio está construido bajo principios de Clean Code, arquitectura en capas, persistencia relacional con Spring Data JPA y observabilidad distribuida con Zipkin.
 
-## Alcance funcional
-- UML modificado
-<img width="1409" height="833" alt="image" src="https://github.com/user-attachments/assets/ffa90788-4cb3-47e8-91db-951fed53838f" />
+---
 
+## 📐 Diagrama de Dominio / UML
 
+<p align="center">
+  <img src="docs/img/uml_shipment_service.png" alt="Diagrama de Clases UML - Shipment Service" width="900px" />
+</p>
 
-### Gestión de envíos
-- Registrar un nuevo envío (cliente, dirección de origen, dirección de destino, peso y dimensiones)
-- Consultar envíos de forma individual (por ID o por código de seguimiento)
-- Consultar envíos de forma grupal filtrando por estado
-- Cancelar un envío únicamente cuando se encuentra en estado `PENDIENTE`
+---
 
-### Actualización de estado y auditoría
-- Cambiar el estado de un envío respetando el flujo permitido:
-    PENDIENTE → EN_RUTA → ENTREGADO
-    PENDIENTE → CANCELADO
-- Registrar automáticamente un historial de auditoría con cada cambio de estado (trazabilidad + fecha/hora)
+## 🎯 Alcance Funcional
 
-### Gestión de repartidores
-- Registrar nuevos repartidores
-- Consultar listado y detalle de repartidores
-- Asignar un repartidor activo a un envío antes de que pase a estado `EN_RUTA`
+### 1. Gestión de Clientes
+- Alta y registro de clientes.
+- Consulta de clientes por ID y listado general.
 
-## Stack tecnológico
+### 2. Gestión de Envíos
+- Registro de un nuevo envío (asociado a cliente, dirección de origen, dirección de destino, peso y dimensiones).
+- Cálculo automático de tarifas logísticas según peso y dimensiones.
+- Generación de código único de seguimiento (*tracking code*).
+- Consulta individual (por ID o código de seguimiento) y listados filtrados por estado.
+- Cancelación de envíos (permitida únicamente cuando se encuentra en estado `PENDIENTE`).
 
-| Tecnología              | Uso                                    |
-|-------------------------|----------------------------------------|
-| Java 25                 | Lenguaje base                          |
-| Spring Boot 4.1.2         | Framework principal                    |
-| Spring Data JPA         | Persistencia                           |
-| MySQL                   | Base de datos relacional               |
-| springdoc-openapi       | Documentación OpenAPI 3 / Swagger      |
-| JUnit 5 + Mockito       | Pruebas unitarias                      |
-| Docker + Docker Compose | Empaquetado e infraestructura          |
+### 3. Máquina de Estados y Auditoría
+- Transición estricta de estados:
+  $$\text{PENDIENTE} \longrightarrow \text{EN\_RUTA} \longrightarrow \text{ENTREGADO}$$
+  $$\text{PENDIENTE} \longrightarrow \text{CANCELADO}$$
+- Registro automático en `HistorialEnvio` con cada cambio de estado (trazabilidad, timestamps y usuario).
 
-## Arquitectura
+### 4. Integración con Courier-Service (Inter-Servicio)
+- Consulta y validación de existencia y estado activo de repartidores vía cliente **OpenFeign**.
+- Asignación de repartidor a envíos en estado `PENDIENTE`.
+- Tolerancia a fallos y resiliencia implementada con **Resilience4j** (Circuit Breaker y TimeLimiter).
 
-El proyecto sigue una arquitectura en capas claramente separadas:
+---
+
+## 🛠️ Stack Tecnológico
+
+| Tecnología | Propósito |
+| :--- | :--- |
+| **Java 25** | Plataforma de desarrollo principal |
+| **Spring Boot 4.1.2** | Framework base del microservicio |
+| **Spring Cloud 2025.1.4** | Config Server, Eureka Client y OpenFeign |
+| **Spring Data JPA / Hibernate** | Persistencia relacional |
+| **MySQL 8.4** | Base de datos (`shipment_db`) |
+| **Resilience4j** | Patrones de tolerancia a fallos (Circuit Breaker) |
+| **Micrometer + Zipkin** | Trazabilidad distribuida de extremo a extremo |
+| **Springdoc OpenAPI 3** | Documentación y contratos Swagger |
+| **JUnit 5 + Mockito** | Pruebas unitarias y de integración |
+
+---
+
+## 🏛️ Estructura del Proyecto
+
+El proyecto sigue una arquitectura en capas desacoplada:
+
 ```text
-com.logitrack.shipment
-├── controller         # Capa de exposición (API REST)
-│   ├── dto            # DTOs de Request y Response (aislados del dominio)
-│   └── EnvioController.java
-├── service            # Lógica de negocio (Casos de uso)
-│   ├── impl           # Implementaciones de los servicios
-│   └── EnvioService.java
-├── repository         # Capa de acceso a datos (Spring Data JPA)
-│   └── EnvioRepository.java
-├── domain             # Core del negocio (Puro, sin dependencias web)
-│   ├── entity         # Entidades JPA (Envio, Repartidor, AuditableEntity)
-│   ├── enums          # Enumeradores (EstadoEnvio, EstadoRepartidor)
-│   └── vo             # Value Objects (@Embeddable Direccion)
-├── exception          # Manejo global de errores (@RestControllerAdvice)
-├── config             # Configuraciones (Swagger, Beans, etc.)
+com.logitrack.shipmentservice
+├── cliente                  # Clientes HTTP inter-servicio
+│   └── courier              # Feign Client y DTOs para courier-service
+├── config                   # Beans de configuración (OpenAPI, Feign, etc.)
+├── controlador              # Controladores REST (@RestController)
+├── dominio
+│   ├── dto                  # DTOs de Request y Response
+│   ├── entidad              # Entidades JPA (Envio, Cliente, HistorialEnvio, etc.)
+│   ├── enumerador           # Enums de dominio (EstadoEnvio, etc.)
+│   ├── evento               # Eventos del dominio
+│   ├── exception            # Excepciones de negocio y @RestControllerAdvice
+│   └── valueObject          # Value Objects (@Embeddable Direccion, Dimensiones)
+├── repositorio              # Interfaces Spring Data JPA
+├── servicio                 # Lógica de negocio (EnvioService, ClienteService)
 └── ShipmentServiceApplication.java
 ```
-- **DTOs** para desacoplar el contrato de la API de las entidades JPA
-- **UUID** como identificador de todas las entidades
-- **Value Objects** para modelar conceptos del dominio (ej. Dirección)
-- **Auditoría** automática en cada cambio de estado
-- **Manejo global de excepciones** con `@RestControllerAdvice`
-- **Validaciones de dominio** (máquina de estados y cálculo de tarifa)
 
-## Modelo de dominio
+---
 
-- **Envío**: código de seguimiento, peso, dimensiones, tarifa, estado, relaciones con Cliente, Direcciones y Repartidor
-- **Cliente**: datos de contacto
-- **Dirección**: origen y destino (calle, número, ciudad, código postal) – modelada como Value Object
-- **Repartidor**: nombre, tipo de vehículo y estado (`ACTIVO` / `INACTIVO`)
-- **Estados de envío**: `PENDIENTE`, `EN_RUTA`, `ENTREGADO`, `CANCELADO`
+## 🚀 Despliegue y Ejecución
 
-## Requisitos previos
-
-- Java 25
-- Maven 3.9+
-- Docker y Docker Compose
-- MySQL 8 (solo si se ejecuta fuera de Docker)
-
-## Ejecución con Docker
-
-Levantar el entorno completo (aplicación + MySQL) con un solo comando:
+### Opción 1: En Ecosistema con Docker Compose (Recomendado)
+El despliegue oficial se orquesta de forma integrada junto al resto de microservicios desde el repositorio `logitrack-infra`:
 
 ```bash
-docker-compose up --build
+cd ../logitrack-infra
+docker compose up -d
 ```
-## Ejecución local
 
-Configurar la base de datos en src/main/resources/application.yml
-Ejecutar el script de inicialización de la base de datos
-Arrancar la aplicación:
+### Opción 2: Ejecución Local en Desarrollo
+1. Asegurarse de tener corriendo Config Server (`:8085`), Eureka Server (`:8065`) y MySQL (`:3309`).
+2. Iniciar el servicio mediante el Maven Wrapper:
 ```bash
 ./mvnw spring-boot:run
 ```
-## Testing
-Pruebas unitarias
 
-Capa de servicios con JUnit 5 y Mockito
-Cobertura sobre el cálculo de tarifa y las validaciones de la máquina de estados
+---
+
+## 🧪 Pruebas Automatizadas
+
+Ejecutar la suite de pruebas unitarias (servicios, máquina de estados, validaciones de tarifas y DTOs):
+
 ```bash
 ./mvnw test
-```https://github.com/logitrack-lazyhawk/shipment-service/pull/54/conflict?name=README.md&ancestor_oid=6fc00c73247976c15e533f867ce05e9b8a115aa2&base_oid=014e2781b8365ee18303334652cd06794d7d6dd0&head_oid=7ca355fc541449ed7612ee32a03d47eb33ec2582
-## Pruebas de integración
-Repositorios con @DataJpaTest
-Endpoints con @WebMvcTest / @SpringBootTest
-```text
-## Estructura del proyectosrc/
-├── main/
-│   ├── java/
-│   │   └── com/
-│   │       └── logitrack/
-│   │           └── shipmentservice/
-│   │               ├── controlador/
-│   │               ├── dominio/
-│   │               │   ├── dto/
-│   │               │   ├── entidad/
-│   │               │   ├── enumerador/
-│   │               │   ├── evento/
-│   │               │   ├── exception/
-│   │               │   └── valueObject/
-│   │               ├── repositorio/
-│   │               ├── servicio/
-│   │               └── ShipmentServiceApplication.java
-│   └── resources/
-│       └── application.yml
-└── test/
-    └── java/
-        └── com/
-            └── logitrack/
-                └── shipmentservice/
 ```
-## Buenas prácticas aplicadas
-Clean Code
-Principios REST (recursos en plural, verbos HTTP correctos)
-DTOs para desacoplamiento
-Value Objects para el dominio
-Manejo global de excepciones (@RestControllerAdvice)
-UUID en todas las entidades
-Auditoría de cambios de estado
-Dockerfile multi-stage optimizado
-docker-compose para entorno reproducible
 
-## Autores
-* Mamani, Luis Carlos Manuel - https://github.com/LuisMPlus
-* Maygua Altamirano, Pio Roman - https://github.com/95670446-maker
-* Mamani Leandro - https://github.com/leoM2022
-  
-Desarrollado como parte del Sprint 1 – Core de Negocio y Dominio Relacional
-LazyHawk · Desarrollo y Arquitecturas Avanzadas de Software
+---
 
-## Sprint 3
+## 👥 Autores
+* **Mamani, Luis Carlos Manuel** - [LuisMPlus](https://github.com/LuisMPlus)
+* **Maygua Altamirano, Pio Roman** - [95670446-maker](https://github.com/95670446-maker)
+* **Mamani Leandro** - [leoM2022](https://github.com/leoM2022)
 
-Base común: Java 25, Spring Boot 4.1.2 y Spring Cloud 2025.1.4.
-Las trazas se exportan mediante Micrometer/Brave y `spring-boot-starter-zipkin`.
-Consultar la guía `SPRINT3.md` de logitrack-infra para arranque y demostración.
+*Proyecto LogiTrack (LazyHawk) · DAAS 2026 · Universidad Nacional de Jujuy (UNJu)*
