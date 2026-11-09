@@ -1,7 +1,9 @@
 package com.logitrack.shipmentservice.controlador.exception;
 
 import com.logitrack.shipmentservice.dominio.dto.ErrorResponseDto;
+import com.logitrack.shipmentservice.dominio.exception.CourierServiceUnavailableException;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
+import com.logitrack.shipmentservice.dominio.exception.RepartidorNoEncontradoException;
 import com.logitrack.shipmentservice.dominio.exception.TransicionEstadoInvalidaException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -54,6 +56,36 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+    }
+
+    @ExceptionHandler(RepartidorNoEncontradoException.class)
+    public ResponseEntity<ErrorResponseDto> handleRepartidorNoEncontrado(
+            RepartidorNoEncontradoException ex, HttpServletRequest request) {
+
+        ErrorResponseDto respuesta = ErrorResponseDto.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Repartidor no encontrado")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+    }
+
+    @ExceptionHandler(CourierServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponseDto> handleCourierServiceUnavailable(
+            CourierServiceUnavailableException ex, HttpServletRequest request) {
+
+        ErrorResponseDto respuesta = ErrorResponseDto.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .error("Servicio de Repartidores No Disponible")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(respuesta);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
