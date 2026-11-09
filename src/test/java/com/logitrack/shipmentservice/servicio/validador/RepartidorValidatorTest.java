@@ -2,7 +2,10 @@ package com.logitrack.shipmentservice.servicio.validador;
 
 import com.logitrack.shipmentservice.cliente.courier.CourierClient;
 import com.logitrack.shipmentservice.cliente.courier.dto.RepartidorClientResponseDto;
+import com.logitrack.shipmentservice.dominio.exception.CourierServiceUnavailableException;
 import com.logitrack.shipmentservice.dominio.exception.ReglaNegocioException;
+import com.logitrack.shipmentservice.dominio.exception.RepartidorNoDisponibleException;
+import com.logitrack.shipmentservice.dominio.exception.RepartidorNoEncontradoException;
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
@@ -18,14 +21,13 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Pruebas unitarias para RepartidorValidator en su integración con CourierClient (OpenFeign).
  *
  * @author LuisMPlus, 95670446-maker y leoM2022 / Equipo lazyHawk
- * @version 2.0.0
+ * @version 2.1.0
  */
 @ExtendWith(MockitoExtension.class)
 class RepartidorValidatorTest {
@@ -67,7 +69,7 @@ class RepartidorValidatorTest {
     }
 
     @Test
-    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando el repartidor tiene estado INACTIVO")
+    @DisplayName("validarDisponibilidadRemota: Lanza RepartidorNoDisponibleException cuando el repartidor tiene estado INACTIVO")
     void validarDisponibilidadRemota_RepartidorInactivo_LanzaReglaNegocioException() {
         RepartidorClientResponseDto dtoInactivo = new RepartidorClientResponseDto(
                 repartidorId,
@@ -80,7 +82,7 @@ class RepartidorValidatorTest {
         );
         when(courierClient.consultarDisponibilidad(repartidorId)).thenReturn(dtoInactivo);
 
-        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+        RepartidorNoDisponibleException ex = assertThrows(RepartidorNoDisponibleException.class, () ->
                 repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 
@@ -88,15 +90,15 @@ class RepartidorValidatorTest {
     }
 
     @Test
-    @DisplayName("validarDisponibilidadRemota: Lanza IllegalArgumentException cuando courier-service retorna 404 Not Found")
-    void validarDisponibilidadRemota_NotFound_LanzaIllegalArgumentException() {
+    @DisplayName("validarDisponibilidadRemota: Lanza RepartidorNoEncontradoException cuando courier-service retorna 404 Not Found")
+    void validarDisponibilidadRemota_NotFound_LanzaRepartidorNoEncontradoException() {
         Request request = Request.create(Request.HttpMethod.GET, "/api/v1/repartidores/" + repartidorId + "/disponibilidad",
                 Collections.emptyMap(), null, new RequestTemplate());
         FeignException.NotFound notFoundException = new FeignException.NotFound("Not Found", request, null, Collections.emptyMap());
 
         when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(notFoundException);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+        RepartidorNoEncontradoException ex = assertThrows(RepartidorNoEncontradoException.class, () ->
                 repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 
@@ -104,15 +106,15 @@ class RepartidorValidatorTest {
     }
 
     @Test
-    @DisplayName("validarDisponibilidadRemota: Lanza ReglaNegocioException cuando courier-service retorna 400 Bad Request")
-    void validarDisponibilidadRemota_BadRequest_LanzaReglaNegocioException() {
+    @DisplayName("validarDisponibilidadRemota: Lanza RepartidorNoDisponibleException cuando courier-service retorna 400 Bad Request")
+    void validarDisponibilidadRemota_BadRequest_LanzaRepartidorNoDisponibleException() {
         Request request = Request.create(Request.HttpMethod.GET, "/api/v1/repartidores/" + repartidorId + "/disponibilidad",
                 Collections.emptyMap(), null, new RequestTemplate());
         FeignException.BadRequest badRequestException = new FeignException.BadRequest("Bad Request", request, null, Collections.emptyMap());
 
         when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(badRequestException);
 
-        ReglaNegocioException ex = assertThrows(ReglaNegocioException.class, () ->
+        RepartidorNoDisponibleException ex = assertThrows(RepartidorNoDisponibleException.class, () ->
                 repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 
@@ -120,11 +122,11 @@ class RepartidorValidatorTest {
     }
 
     @Test
-    @DisplayName("validarDisponibilidadRemota: Conserva un error técnico para responder 503")
-    void validarDisponibilidadRemota_ErrorConexion_LanzaIllegalStateException() {
+    @DisplayName("validarDisponibilidadRemota: Lanza CourierServiceUnavailableException ante fallo de red o caída")
+    void validarDisponibilidadRemota_ErrorConexion_LanzaCourierServiceUnavailableException() {
         when(courierClient.consultarDisponibilidad(repartidorId)).thenThrow(new RuntimeException("Connection refused"));
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+        CourierServiceUnavailableException ex = assertThrows(CourierServiceUnavailableException.class, () ->
                 repartidorValidator.validarDisponibilidadRemota(repartidorId)
         );
 
