@@ -15,3 +15,7 @@ spring:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
     publisher-confirm-type: correlated
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
+
