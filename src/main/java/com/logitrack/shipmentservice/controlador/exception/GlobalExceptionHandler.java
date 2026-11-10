@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.springframework.web.server.ResponseStatusException;
 /**
  * Manejador global de excepciones para la API REST.
  * Centraliza las respuestas de error en una estructura uniforme (ErrorResponseDto).
@@ -165,5 +165,24 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponseDto> handleSecurityError(
+            ResponseStatusException ex,
+            HttpServletRequest request
+    ) {
+
+        ErrorResponseDto respuesta = ErrorResponseDto.builder()
+                .timestamp(Instant.now())
+                .status(ex.getStatusCode().value())
+                .error("Error de autenticación o autorización")
+                .message(ex.getReason())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(respuesta);
     }
 }

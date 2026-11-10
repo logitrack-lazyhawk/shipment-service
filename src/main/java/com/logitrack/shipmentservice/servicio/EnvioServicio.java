@@ -24,4 +24,13 @@ public interface EnvioServicio {
     EnvioResponseDto cancelarEnvio(UUID id);
     EnvioResponseDto cambiarEstado(UUID id, EstadoEnvio nuevoEstado);
     EnvioResponseDto asignarRepartidor(UUID envioId, UUID repartidorId);
+    Page<EnvioResponseDto> listarMisEnvios(
+            String email,
+            Pageable pageable
+    );
+
+    EnvioResponseDto obtenerMiEnvioPorTracking(
+            String email,
+            String codigo
+    );
 }

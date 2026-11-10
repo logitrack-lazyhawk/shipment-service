@@ -153,6 +153,45 @@ public class EnvioServiceImpl implements EnvioServicio {
 
         return mapearHaciaResponse(envioGuardado);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EnvioResponseDto> listarMisEnvios(
+            String email,
+            Pageable pageable
+    ) {
+        Pageable pageableSanitizado =
+                pageableSanitizer != null
+                        ? pageableSanitizer.sanitizar(pageable)
+                        : pageable;
+
+        Page<Envio> pagina = envioRepository
+                .findByCliente_EmailIgnoreCase(
+                        email,
+                        pageableSanitizado
+                );
+
+        return pagina.map(this::mapearHaciaResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EnvioResponseDto obtenerMiEnvioPorTracking(
+            String email,
+            String codigo
+    ) {
+        Envio envio = envioRepository
+                .findByCodigoSeguimientoAndCliente_EmailIgnoreCase(
+                        codigo,
+                        email
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No se encontró un envío propio con ese código"
+                        )
+                );
+
+        return mapearHaciaResponse(envio);
+    }
 
     private String generarHashUnico() {
         String hashGenerado;

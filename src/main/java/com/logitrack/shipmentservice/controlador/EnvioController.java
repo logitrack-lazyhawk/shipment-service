@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import com.logitrack.shipmentservice.config.TrackingJwtVerifier;
+import org.springframework.http.HttpHeaders;
 
 /**
  * Controlador REST para la gestión principal de envíos.
@@ -36,7 +38,53 @@ import java.util.UUID;
 public class EnvioController {
 
     private final EnvioServicio envioServicio;
+    private final TrackingJwtVerifier trackingJwtVerifier;
 
+    @Operation(
+            summary = "Consultar los envíos del cliente autenticado"
+    )
+    @GetMapping("/mis-envios")
+    public ResponseEntity<Page<EnvioResponseDto>> misEnvios(
+            @RequestHeader(
+                    value = HttpHeaders.AUTHORIZATION,
+                    required = false
+            ) String authorization,
+            @PageableDefault(page = 0, size = 8)
+            Pageable pageable
+    ) {
+
+        String email = trackingJwtVerifier
+                .exigirEmailCliente(authorization);
+
+        Page<EnvioResponseDto> envios =
+                envioServicio.listarMisEnvios(email, pageable);
+
+        return ResponseEntity.ok(envios);
+    }
+
+    @Operation(
+            summary = "Consultar el seguimiento de un envío propio"
+    )
+    @GetMapping("/mis-envios/tracking/{codigo}")
+    public ResponseEntity<EnvioResponseDto> miTracking(
+            @RequestHeader(
+                    value = HttpHeaders.AUTHORIZATION,
+                    required = false
+            ) String authorization,
+            @PathVariable String codigo
+    ) {
+
+        String email = trackingJwtVerifier
+                .exigirEmailCliente(authorization);
+
+        EnvioResponseDto envio =
+                envioServicio.obtenerMiEnvioPorTracking(
+                        email,
+                        codigo
+                );
+
+        return ResponseEntity.ok(envio);
+    }
     /**
      * Registra un nuevo envío en la plataforma LogiTrack.
      * Genera automáticamente el Hash único de seguimiento y establece el estado en PENDIENTE.
