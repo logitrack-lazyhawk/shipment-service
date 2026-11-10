@@ -18,4 +18,7 @@ spring:
     listener:
       simple:
         auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
-
+  security:
+    jwt:
+      secret-key: ${SECURITY_JWT_SECRET_KEY:}
+      issuer: ${SECURITY_JWT_ISSUER:logitrack-security}

@@ -27,4 +27,14 @@ public interface EnvioRepository extends JpaRepository<Envio, UUID> {
     List<Envio> findByEstado(EstadoEnvio estado);
 
     Page<Envio> findByEstado(EstadoEnvio estado, Pageable pageable);
+
+    Page<Envio> findByCliente_EmailIgnoreCase(
+            String email,
+            Pageable pageable
+    );
+
+    Optional<Envio> findByCodigoSeguimientoAndCliente_EmailIgnoreCase(
+            String codigoSeguimiento,
+            String email
+    );
 }
